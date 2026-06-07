@@ -191,19 +191,17 @@ else:
     grid_html = ["<div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px;'>"]
     
     for chore, assignees in roster_items:
-        grid_html.append(f"""
-        <div class="compact-card">
-            <div class="compact-card-title">{chore}</div>
-            <div class="compact-card-subtitle">Assigned to:</div>
-            <div class="compact-card-assignee">{', '.join(assignees)}</div>
-            <div style="margin-top: 4px;">
-                <a href="/chore_guide?chore={chore}" target="_self" class="compact-card-link">📖 Guide</a>
-            </div>
-        </div>
-        """)
+        grid_html.append(f"""<div class="compact-card">
+<div class="compact-card-title">{chore}</div>
+<div class="compact-card-subtitle">Assigned to:</div>
+<div class="compact-card-assignee">{', '.join(assignees)}</div>
+<div style="margin-top: 4px;">
+<a href="/chore_guide?chore={chore}" target="_self" class="compact-card-link">📖 Guide</a>
+</div>
+</div>""")
         
     grid_html.append("</div>")
-    st.markdown("\n".join(grid_html), unsafe_allow_html=True)
+    st.markdown("".join(grid_html), unsafe_allow_html=True)
 
     # Show off duty brothers if any
     if st.session_state.off_duty:
