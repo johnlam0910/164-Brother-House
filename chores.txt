@@ -1,0 +1,9 @@
+Staircase
+Back Yard
+Front Yard
+Dining Table
+Mop Floor
+Toilet
+Inside Kitchen
+Sweep Floor
+Outside Kitchen

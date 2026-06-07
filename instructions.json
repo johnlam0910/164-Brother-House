@@ -1,0 +1,136 @@
+{
+  "Staircase": {
+    "tools": [
+      "Broom / Hand vacuum",
+      "Microfiber cloth",
+      "All-purpose spray"
+    ],
+    "steps": [
+      "Start from the **top step** and work your way down. This ensures dust falls to steps you haven't cleaned yet.",
+      "Sweep or vacuum each step carefully, paying close attention to the corners where dust gathers.",
+      "Use the multi-purpose spray and microfiber cloth to wipe down the **entire handrail** and banister posts. These are high-touch areas that accumulate germs.",
+      "Clear away any shoes, bags, or items left on the staircase and place them in their designated locations.",
+      "Inspect the steps for any scuffs or spots and scrub them gently with a damp sponge."
+    ]
+  },
+  "Back Yard": {
+    "tools": [
+      "Outdoor push broom",
+      "Trash bags",
+      "Garden hose"
+    ],
+    "steps": [
+      "Sweep the concrete patio area and pathways to clear leaves, twigs, and dust.",
+      "Inspect the garden and lawn for any stray rubbish or weeds. Gather and dispose of them.",
+      "Empty the outdoor waste bins if they are more than half full. Replace with fresh liners.",
+      "Wipe down the outdoor dining table and chairs with a damp cloth.",
+      "Neatly coil the garden hose and make sure gardening tools are placed back in the storage bin."
+    ]
+  },
+  "Front Yard": {
+    "tools": [
+      "Outdoor broom",
+      "Weeding tool",
+      "Watering can / Hose"
+    ],
+    "steps": [
+      "Sweep the main entry path, porch, and driveway clear of dirt and leaves.",
+      "Remove any weeds growing in the pathway cracks or flowerbeds near the front door.",
+      "Water the potted plants and garden beds near the entryway (if it hasn't rained).",
+      "Check for any letters or pamphlets left by the gate/doorway and bring them inside to the mail stack.",
+      "Ensure the bins are placed neatly on the curb if it's collection day, or returned to their side area if collection is done."
+    ]
+  },
+  "Dining Table": {
+    "tools": [
+      "Sponges",
+      "Dish soap / Surface spray",
+      "Dry dishcloth"
+    ],
+    "steps": [
+      "Clear all remaining dishes, cups, cutlery, and condiment bottles to the kitchen sink.",
+      "Wipe down the table surface with a soapy sponge to remove grease and food particles.",
+      "Spray table surface with disinfectant and wipe dry with a clean microfiber cloth.",
+      "Tidy and wipe down the chairs, tucking them in neatly under the table.",
+      "Ensure the salt, pepper, and decorative centerpieces are cleaned and placed back in the center."
+    ]
+  },
+  "Mop Floor": {
+    "tools": [
+      "Mop",
+      "Bucket",
+      "Floor cleaner solution",
+      "Warm water"
+    ],
+    "steps": [
+      "**Crucial Step:** Ensure the floors have been swept or vacuumed thoroughly before you begin mopping.",
+      "Fill the bucket with warm water and mix in the recommended amount of floor cleaner.",
+      "Dip the mop, wring it out well (mop should be damp, not dripping wet), and mop using a **figure-8 motion**.",
+      "Work backwards towards the exit so you don't step on damp floor surfaces.",
+      "Change the mop water if it starts looking dark or dirty.",
+      "Place a warning sign or notify housemates to stay off the floor until dry (approx. 15-20 mins)."
+    ]
+  },
+  "Toilet": {
+    "tools": [
+      "Toilet brush",
+      "Disinfectant spray",
+      "Glass cleaner",
+      "Paper towels / Cleaning cloths"
+    ],
+    "steps": [
+      "Squirt toilet bowl cleaner inside the rim of the bowl. Let it sit for 10 minutes to sanitize.",
+      "Wipe the mirror with glass cleaner and a microfiber cloth until streak-free.",
+      "Spray and wipe down the sink basin, taps, countertops, and cabinet surfaces.",
+      "Scrub the inside of the toilet bowl thoroughly with the brush and flush.",
+      "Wipe the entire exterior of the toilet (seat, lid, base, flush handle) with disinfectant and paper towels (discard towels immediately).",
+      "Empty the hygiene waste bin, spray it with disinfectant, and put in a new bag.",
+      "Check and refill hand soap, toilet rolls, and replace the hand towel with a clean one."
+    ]
+  },
+  "Inside Kitchen": {
+    "tools": [
+      "Dish sponge",
+      "Degreaser spray",
+      "Stainless steel cleaner",
+      "Scouring pad"
+    ],
+    "steps": [
+      "Wash, dry, and put away all dishes, pots, and pans left in the sink area.",
+      "Clean the stove cooktop, removing any burnt grease or spills using a sponge and degreaser.",
+      "Wipe down countertops, microwave interior, and cabinet handles with kitchen spray.",
+      "Scrub the kitchen sink basin and clean out the drain strainer.",
+      "Empty the kitchen trash and compost bins. Wipe the inside of the lids with disinfectant.",
+      "Fold and hang dish towels to dry, replacing damp ones with fresh towels."
+    ]
+  },
+  "Sweep Floor": {
+    "tools": [
+      "Broom",
+      "Dustpan",
+      "Hand brush"
+    ],
+    "steps": [
+      "Clear lightweight furniture like dining chairs, trash bins, and rugs from the floor area.",
+      "Sweep the floor starting from the corners and moving towards the center of the room.",
+      "Gather the debris into a pile, sweep it into the dustpan, and empty it into the main trash bin.",
+      "Ensure you sweep under the dining table, kitchen benches, and main entryway where crumbs accumulate.",
+      "Inspect the broom head and clear away any trapped hair or fluff into the trash."
+    ]
+  },
+  "Outside Kitchen": {
+    "tools": [
+      "Wire grill brush",
+      "Warm soapy water",
+      "Heavy-duty sponge",
+      "Outdoor broom"
+    ],
+    "steps": [
+      "Scrub the BBQ grill grates with the wire brush to remove food residue. Wipe grates down with cooking oil.",
+      "Wipe down outdoor countertops, sink basin, and prep benches with soapy water.",
+      "Clean and empty the grease drip tray underneath the grill. Replace tin foil liner if needed.",
+      "Sweep the surrounding concrete floor, removing grease spots with degreaser if necessary.",
+      "**Safety Check:** Double-check that all gas cylinders are tightly shut off and the covers are placed securely back on the BBQ."
+    ]
+  }
+}

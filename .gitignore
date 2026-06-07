@@ -1,0 +1,11 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local Streamlit config and temporary files
+.streamlit/
+.system_generated/
+.gemini/
+
+# Local roster data (no need to track weekly changes on GitHub)
+roster.json
