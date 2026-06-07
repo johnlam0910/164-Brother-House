@@ -84,6 +84,16 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
             help="Enter the list of chores, one chore per line."
         )
     
+    # Add App URL field
+    st.markdown("---")
+    st.markdown("🌐 **Website URL Configuration (for WhatsApp links)**")
+    app_url_input = st.text_input(
+        "Live Deployed Website URL", 
+        value=st.session_state.get("app_url", ""),
+        placeholder="https://164-brothers-house.streamlit.app",
+        help="Paste your live Streamlit website link here. When you copy the roster for WhatsApp, it will automatically append a direct link to the Chore Guide!"
+    )
+    
     # Save changes button
     if st.button("💾 Save Changes & Update Lists", use_container_width=True):
         new_brothers = [line.strip() for line in brothers_text.split("\n") if line.strip()]
@@ -96,14 +106,19 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
         else:
             st.session_state.brothers_list = new_brothers
             st.session_state.chores_list = new_chores
+            st.session_state.app_url = app_url_input.strip()
             
             # Save to text files for persistence
             with open("brothers.txt", "w", encoding="utf-8") as f:
                 f.write("\n".join(new_brothers))
             with open("chores.txt", "w", encoding="utf-8") as f:
                 f.write("\n".join(new_chores))
+            
+            # Save config.json
+            with open("config.json", "w", encoding="utf-8") as f:
+                json.dump({"app_url": st.session_state.app_url}, f, ensure_ascii=False, indent=2)
                 
-            st.success("House roster lists updated and saved to disk successfully!")
+            st.success("House roster lists and website config updated successfully!")
             st.rerun()
 
 # Layout for Generation Action
@@ -230,6 +245,13 @@ else:
         if st.session_state.off_duty:
             whatsapp_lines.append("")
             whatsapp_lines.append(f"💤 *Resting:* {', '.join(st.session_state.off_duty)}")
+            
+        # Add Guide redirect link if app_url is configured
+        if st.session_state.get("app_url"):
+            base_url = st.session_state.app_url.rstrip("/")
+            guide_link = f"{base_url}/Chore_Guide"
+            whatsapp_lines.append("")
+            whatsapp_lines.append(f"📖 *View Detailed Guide:* {guide_link}")
             
         # Completion checkmark instructions
         whatsapp_lines.append("")

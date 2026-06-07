@@ -162,6 +162,19 @@ if 'chore_details' not in st.session_state:
         with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
             json.dump(DEFAULT_INSTRUCTIONS, f, ensure_ascii=False, indent=2)
 
+# Load app_url configuration
+CONFIG_FILE = "config.json"
+if 'app_url' not in st.session_state:
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                st.session_state.app_url = config.get("app_url", "")
+        except:
+            st.session_state.app_url = ""
+    else:
+        st.session_state.app_url = ""
+
 # 2. Page Navigation definitions using modern st.Page syntax
 roster_page = st.Page("views/roster_generator.py", title="Roster Generator", icon="📋", default=True)
 guide_page = st.Page("views/chore_guide.py", title="Chore Guide", icon="📖")
