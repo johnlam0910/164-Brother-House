@@ -249,12 +249,11 @@ else:
         # Add Guide redirect link if app_url is configured
         if st.session_state.get("app_url"):
             base_url = st.session_state.app_url.rstrip("/")
+            # If they entered the full subpage path, strip it out to point to the main page
             if base_url.lower().endswith("/chore_guide"):
-                guide_link = base_url
-            else:
-                guide_link = f"{base_url}/chore_guide"
+                base_url = base_url[:-12].rstrip("/")
             whatsapp_lines.append("")
-            whatsapp_lines.append(f"📖 *View Detailed Guide:* {guide_link}")
+            whatsapp_lines.append(f"📖 *View Detailed Guide:* {base_url}")
             
         # Completion checkmark instructions
         whatsapp_lines.append("")
