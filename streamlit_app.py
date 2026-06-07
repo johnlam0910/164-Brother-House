@@ -177,7 +177,7 @@ if 'app_url' not in st.session_state:
 
 # 2. Page Navigation definitions using modern st.Page syntax
 roster_page = st.Page("views/roster_generator.py", title="Roster Generator", icon="📋", default=True)
-guide_page = st.Page("views/chore_guide.py", title="Chore Guide", icon="📖")
+guide_page = st.Page("views/chore_guide.py", title="Chore Guide", icon="📖", url_path="chore_guide")
 
 pg = st.navigation([roster_page, guide_page])
 
