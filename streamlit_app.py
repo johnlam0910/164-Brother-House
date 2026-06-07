@@ -240,6 +240,54 @@ st.markdown("""
         color: #222222;
     }
     
+    /* Compact Cards layout for responsive mobile-friendly grid */
+    .compact-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 12px 14px;
+        box-shadow: 0 2px 8px rgba(46, 90, 68, 0.04);
+        border: 1px solid #e8edea;
+        border-left: 4px solid #2e5a44;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .compact-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(46, 90, 68, 0.08);
+        border-color: #2e5a44;
+    }
+    .compact-card-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2e5a44;
+        margin-bottom: 2px;
+    }
+    .compact-card-subtitle {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #888;
+        margin-bottom: 2px;
+    }
+    .compact-card-assignee {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #222222;
+        margin-bottom: 6px;
+    }
+    .compact-card-link {
+        font-size: 0.8rem;
+        color: #2e5a44 !important;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+    .compact-card-link:hover {
+        color: #1d3b2c !important;
+        text-decoration: underline;
+    }
+    
     /* Fallback image design box */
     .fallback-image-box {
         border: 2px dashed #bdc3c7;

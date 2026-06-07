@@ -9,11 +9,13 @@ st.markdown("---")
 # List of default chores for lookup
 chores_list = st.session_state.chores_list
 
-# Pre-selection logic (if user clicked a guide link from Page 1)
+# Pre-selection logic (checks URL query parameters first, then session state backup)
 default_index = 0
-if 'selected_chore_guide' in st.session_state and st.session_state.selected_chore_guide in chores_list:
+query_chore = st.query_params.get("chore", None)
+if query_chore and query_chore in chores_list:
+    default_index = chores_list.index(query_chore)
+elif 'selected_chore_guide' in st.session_state and st.session_state.selected_chore_guide in chores_list:
     default_index = chores_list.index(st.session_state.selected_chore_guide)
-    # Clear the state once handled to allow normal navigation later
     del st.session_state.selected_chore_guide
 
 # Chore Selection

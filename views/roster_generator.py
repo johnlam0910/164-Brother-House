@@ -187,31 +187,23 @@ else:
     # Display Roster in a beautiful grid
     roster_items = list(st.session_state.roster.items())
     
-    # Set columns for display
-    cols = st.columns(3)
+    # Display Roster in a beautiful responsive grid of compact cards (prevents long vertical scrolling on mobile)
+    grid_html = ["<div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px;'>"]
     
-    for idx, (chore, assignees) in enumerate(roster_items):
-        col_index = idx % 3
-        with cols[col_index]:
-            # HTML Card styling (Minimalist Left-Accent Card without emojis)
-            st.markdown(f"""
-            <div class="card">
-                <div class="card-title">{chore}</div>
-                <div class="card-subtitle">Assigned to:</div>
-                <div class="card-assignee">{', '.join(assignees)}</div>
+    for chore, assignees in roster_items:
+        grid_html.append(f"""
+        <div class="compact-card">
+            <div class="compact-card-title">{chore}</div>
+            <div class="compact-card-subtitle">Assigned to:</div>
+            <div class="compact-card-assignee">{', '.join(assignees)}</div>
+            <div style="margin-top: 4px;">
+                <a href="/chore_guide?chore={chore}" target="_self" class="compact-card-link">📖 Guide</a>
             </div>
-            """, unsafe_allow_html=True)
-            
-            # Button link to instructions
-            cleaned_name = chore.replace(" ", "_").lower()
-            # We can use button or link to switch page.
-            # To switch page in Streamlit multi-page navigation, we can use a query parameter or st.Page execution,
-            # but standard streamlit doesn't support direct cross-page anchor links in custom HTML cards,
-            # so we can just show a helper text or a streamlit button. Let's add a button in each column.
-            # Wait, a Streamlit button under each card is extremely neat and functional!
-            if st.button(f"📖 Guide for {chore}", key=f"guide_btn_{idx}", use_container_width=True):
-                st.session_state.selected_chore_guide = chore
-                st.switch_page("views/chore_guide.py")
+        </div>
+        """)
+        
+    grid_html.append("</div>")
+    st.markdown("\n".join(grid_html), unsafe_allow_html=True)
 
     # Show off duty brothers if any
     if st.session_state.off_duty:
