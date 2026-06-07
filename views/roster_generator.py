@@ -249,7 +249,10 @@ else:
         # Add Guide redirect link if app_url is configured
         if st.session_state.get("app_url"):
             base_url = st.session_state.app_url.rstrip("/")
-            guide_link = f"{base_url}/Chore_Guide"
+            if base_url.lower().endswith("/chore_guide"):
+                guide_link = base_url
+            else:
+                guide_link = f"{base_url}/chore_guide"
             whatsapp_lines.append("")
             whatsapp_lines.append(f"📖 *View Detailed Guide:* {guide_link}")
             
