@@ -31,14 +31,16 @@
     "tools": [
       "Outdoor broom",
       "Weeding tool",
-      "Watering can / Hose"
+      "Watering can / Hose",
+      "Gardening gloves"
     ],
     "steps": [
       "Sweep the main entry path, porch, and driveway clear of dirt and leaves.",
       "Remove any weeds growing in the pathway cracks or flowerbeds near the front door.",
       "Water the potted plants and garden beds near the entryway (if it hasn't rained).",
       "Check for any letters or pamphlets left by the gate/doorway and bring them inside to the mail stack.",
-      "Ensure the bins are placed neatly on the curb if it's collection day, or returned to their side area if collection is done."
+      "Ensure the bins are placed neatly on the curb if it's collection day, or returned to their side area if collection is done.",
+      "Ensure the gate is closed and locked."
     ]
   },
   "Dining Table": {
