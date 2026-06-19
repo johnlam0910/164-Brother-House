@@ -3,6 +3,31 @@ import os
 import json
 import time
 
+def reorder_files(file_paths, chore_filename):
+    import shutil
+    # Rename to temporary names first to avoid conflicts
+    temp_names = []
+    for idx, path in enumerate(file_paths):
+        dir_name = os.path.dirname(path)
+        ext = os.path.splitext(path)[1]
+        temp_name = os.path.join(dir_name, f"temp_reorder_{idx}{ext}")
+        try:
+            os.rename(path, temp_name)
+            temp_names.append(temp_name)
+        except:
+            pass
+            
+    # Rename from temp to final names with a new timestamp
+    timestamp = int(time.time())
+    for idx, temp_path in enumerate(temp_names):
+        dir_name = os.path.dirname(temp_path)
+        ext = os.path.splitext(temp_path)[1]
+        new_name = os.path.join(dir_name, f"{chore_filename}_{timestamp}_{idx}{ext}")
+        try:
+            os.rename(temp_path, new_name)
+        except:
+            pass
+
 # Page Header
 st.markdown("""
 <div class="main-header">
@@ -179,16 +204,42 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
     edited_steps = st.text_area("Cleaning Steps (one step per line):", value=current_steps_str, height=200)
     
     # 3. Existing Photos Management
-    st.markdown("#### 📷 Manage Photos")
+    st.markdown("#### 📷 Manage & Reorder Photos")
     if found_images:
-        st.write("Click 'Delete' next to any photo you want to remove:")
-        for img_path in found_images:
+        st.caption("Use 🔼 and 🔽 to reorder, or 🗑️ to delete guide photos:")
+        for i, img_path in enumerate(found_images):
             img_filename = os.path.basename(img_path)
-            col_img, col_del = st.columns([4, 1])
+            col_img, col_up, col_down, col_del = st.columns([4, 1.2, 1.2, 1.2])
+            
             with col_img:
-                st.caption(f"File: {img_filename}")
+                st.caption(f"Photo {i+1}: {img_filename}")
+                
+            with col_up:
+                if i > 0:
+                    if st.button("🔼", key=f"up_{img_filename}", help="Move up"):
+                        new_order = found_images.copy()
+                        new_order[i], new_order[i-1] = new_order[i-1], new_order[i]
+                        reorder_files(new_order, chore_filename)
+                        st.session_state.save_success_msg = "✅ Photo order updated!"
+                        st.session_state.keep_editor_open = True
+                        st.rerun()
+                else:
+                    st.write("")
+                    
+            with col_down:
+                if i < len(found_images) - 1:
+                    if st.button("🔽", key=f"down_{img_filename}", help="Move down"):
+                        new_order = found_images.copy()
+                        new_order[i], new_order[i+1] = new_order[i+1], new_order[i]
+                        reorder_files(new_order, chore_filename)
+                        st.session_state.save_success_msg = "✅ Photo order updated!"
+                        st.session_state.keep_editor_open = True
+                        st.rerun()
+                else:
+                    st.write("")
+                    
             with col_del:
-                if st.button("🗑️ Delete", key=f"del_{img_filename}"):
+                if st.button("🗑️", key=f"del_{img_filename}", help="Delete photo"):
                     try:
                         os.remove(img_path)
                         st.session_state.save_success_msg = f"🗑️ Deleted {img_filename}!"
