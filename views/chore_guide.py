@@ -89,37 +89,6 @@ with content_col2:
     # Sort images to keep them ordered (e.g., staircase_1 before staircase_2)
     found_images.sort()
     
-    # Re-index all matching images sequentially to clean up gaps and normalize names
-    normalized = False
-    for idx, img_path in enumerate(found_images):
-        dirname, filename = os.path.split(img_path)
-        ext = os.path.splitext(filename)[1].lower()
-        
-        clean_name = filename
-        if "_pos_" in filename:
-            parts = filename.split("_pos_")
-            if len(parts) > 1 and "_" in parts[1]:
-                clean_name = parts[1].split("_", 1)[1]
-        else:
-            clean_name = filename.replace(chore_filename + "_", "").replace(chore_filename, "")
-            if clean_name.startswith("_"):
-                clean_name = clean_name[1:]
-        
-        clean_name = os.path.splitext(clean_name)[0]
-        expected_filename = f"{chore_filename}_pos_{idx:02d}_{clean_name}{ext}"
-        
-        if filename != expected_filename:
-            new_path = os.path.join(dirname, expected_filename)
-            try:
-                os.rename(img_path, new_path)
-                found_images[idx] = new_path
-                normalized = True
-            except:
-                pass
-                
-    if normalized:
-        found_images.sort()
-    
     if len(found_images) == 1:
         # Display single image directly
         st.image(found_images[0], caption=f"Visual guide for {selected_chore}", use_container_width=True)
@@ -155,66 +124,24 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
     current_steps_str = "\n".join(details.get("steps", []))
     edited_steps = st.text_area("Cleaning Steps (one step per line):", value=current_steps_str, height=200)
     
-    # 3. Existing Photos Management & Reordering
-    st.markdown("#### 📷 Manage Photos & Order")
+    # 3. Existing Photos Management
+    st.markdown("#### 📷 Manage Photos")
     if found_images:
-        st.write("You can reorder photos using the Move Up/Down buttons, or click Delete to remove them:")
-        for idx, img_path in enumerate(found_images):
+        st.write("Click 'Delete' next to any photo you want to remove:")
+        for img_path in found_images:
             img_filename = os.path.basename(img_path)
-            
-            # Clean filename for display (remove position prefix)
-            display_name = img_filename
-            pos_tag = f"_pos_{idx:02d}_"
-            if pos_tag in img_filename:
-                display_name = img_filename.split(pos_tag)[1]
-                
-            col_img, col_up, col_down, col_del = st.columns([5, 1, 1, 1])
+            col_img, col_del = st.columns([4, 1])
             with col_img:
-                st.caption(f"**Photo {idx+1}:** {display_name}")
-            with col_up:
-                if st.button("🔼", key=f"up_{img_filename}", disabled=(idx == 0)):
-                    prev_path = found_images[idx - 1]
-                    prev_filename = os.path.basename(prev_path)
-                    
-                    temp_path = img_path + ".tmp"
-                    os.rename(img_path, temp_path)
-                    
-                    prev_new_filename = prev_filename.replace(f"_pos_{(idx-1):02d}_", f"_pos_{idx:02d}_")
-                    prev_new_path = os.path.join(os.path.dirname(prev_path), prev_new_filename)
-                    os.rename(prev_path, prev_new_path)
-                    
-                    curr_new_filename = img_filename.replace(f"_pos_{idx:02d}_", f"_pos_{(idx-1):02d}_")
-                    curr_new_path = os.path.join(os.path.dirname(img_path), curr_new_filename)
-                    os.rename(temp_path, curr_new_path)
-                    
-                    st.success("Reordered!")
-                    st.rerun()
-            with col_down:
-                if st.button("🔽", key=f"down_{img_filename}", disabled=(idx == len(found_images) - 1)):
-                    next_path = found_images[idx + 1]
-                    next_filename = os.path.basename(next_path)
-                    
-                    temp_path = img_path + ".tmp"
-                    os.rename(img_path, temp_path)
-                    
-                    next_new_filename = next_filename.replace(f"_pos_{(idx+1):02d}_", f"_pos_{idx:02d}_")
-                    next_new_path = os.path.join(os.path.dirname(next_path), next_new_filename)
-                    os.rename(next_path, next_new_path)
-                    
-                    curr_new_filename = img_filename.replace(f"_pos_{idx:02d}_", f"_pos_{(idx+1):02d}_")
-                    curr_new_path = os.path.join(os.path.dirname(img_path), curr_new_filename)
-                    os.rename(temp_path, curr_new_path)
-                    
-                    st.success("Reordered!")
-                    st.rerun()
+                st.caption(f"File: {img_filename}")
             with col_del:
-                if st.button("🗑️", key=f"del_{img_filename}"):
+                if st.button("🗑️ Delete", key=f"del_{img_filename}"):
                     try:
                         os.remove(img_path)
-                        st.success("Deleted photo!")
+                        st.success(f"Deleted {img_filename}!")
+                        # Force reload details and images
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Failed to delete: {e}")
+                        st.error(f"Failed to delete {img_filename}: {e}")
     else:
         st.info("No photos uploaded for this chore yet.")
         
@@ -288,8 +215,7 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                 batch_hashes.add(file_hash)
                 ext = os.path.splitext(uploaded_file.name)[1].lower()
                 timestamp = int(time.time())
-                new_pos = len(found_images) + idx
-                new_filename = f"{chore_filename}_pos_{new_pos:02d}_{timestamp}{ext}"
+                new_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
                 save_path = os.path.join("assets", new_filename)
                 
                 try:
