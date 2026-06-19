@@ -39,17 +39,21 @@ if 'selected_verse' not in st.session_state:
     st.session_state.selected_verse = random.choice(BIBLE_VERSES)
 
 # Page Title & Header
-st.markdown("<h1 style='text-align: center; color: #2e5a44; margin-bottom: 0;'>🏠 Brother House Roster Guide</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #e76f51; font-weight: 700; font-size: 1.15rem; letter-spacing: 1px; margin-top: 5px; margin-bottom: 15px;'>✨ HOUSE OF JESUS LOVER ✨</p>", unsafe_allow_html=True)
+st.markdown("""
+<div class="main-header">
+    <h1 class="main-title">🏠 Brother House Roster Guide</h1>
+    <p class="main-subtitle">✨ HOUSE OF JESUS LOVER ✨</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Display Random Bible Verse Card
 verse = st.session_state.selected_verse
 st.markdown(f"""
-<div style="background-color: #fdfaf2; border: 1px solid #e6dfd3; padding: 20px 25px; border-radius: 10px; text-align: center; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-    <p style="font-size: 1.15rem; color: #5c5549; font-style: italic; margin-bottom: 8px; line-height: 1.5; font-weight: 500;">
+<div class="bible-verse-card">
+    <p class="bible-verse-text">
         "{verse['text']}"
     </p>
-    <p style="font-size: 0.95rem; color: #2e5a44; font-weight: 700; margin: 0;">
+    <p class="bible-verse-ref">
         — {verse['reference']}
     </p>
 </div>
@@ -220,6 +224,16 @@ with st.expander("💾 Backup & Restore House Data", expanded=False):
                 except Exception as e:
                     st.error(f"Failed to restore backup: {e}")
 
+# Roster count mismatch warning (prominent check for mobile viewports where sidebar is collapsed)
+n_brothers = len(st.session_state.brothers_list)
+n_chores = len(st.session_state.chores_list)
+if n_brothers != n_chores:
+    st.warning(
+        f"⚠️ **Roster Count Mismatch:** You have **{n_brothers}** brothers and **{n_chores}** chores. "
+        f"Generating the roster will assign some brothers multiple chores or put them on the off-duty rest list. "
+        f"You can adjust these in the 'Edit Names & Tasks' section above."
+    )
+
 # Layout for Generation Action
 st.markdown("<h3 style='color: #2e5a44;'>🎲 Roster Generation</h3>", unsafe_allow_html=True)
 gen_col1, gen_col2 = st.columns([3, 1])
@@ -295,8 +309,9 @@ else:
 <div class="compact-card-subtitle">Assigned to:</div>
 <div class="compact-card-assignee">{', '.join(assignees)}</div>
 <div style="margin-top: 4px;">
-<a href="/chore_guide?chore={chore}" target="_self" class="compact-card-link">📖 Guide</a>
+<span class="compact-card-link">📖 View Guide</span>
 </div>
+<a href="/chore_guide?chore={chore}" target="_self" class="compact-card-overlay-link"></a>
 </div>""")
         
     grid_html.append("</div>")

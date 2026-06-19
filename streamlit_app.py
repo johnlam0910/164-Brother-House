@@ -235,6 +235,90 @@ st.markdown("""
         background-color: #f2efe9 !important;
     }
     
+    /* Responsive title and heading system */
+    .main-header {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .main-title {
+        color: #2e5a44;
+        margin-bottom: 0px;
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.25;
+        text-align: center;
+    }
+    .main-subtitle {
+        color: #e76f51;
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: 1px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .guide-subtitle {
+        color: #555;
+        font-size: 1.1rem;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+    /* Bible Verse Card class */
+    .bible-verse-card {
+        background-color: #fdfaf2;
+        border: 1px solid #e6dfd3;
+        padding: 20px 25px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .bible-verse-text {
+        font-size: 1.15rem;
+        color: #5c5549;
+        font-style: italic;
+        margin-bottom: 8px;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+    .bible-verse-ref {
+        font-size: 0.95rem;
+        color: #2e5a44;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    /* Home Reminder Card class */
+    .reminder-card {
+        background-color: #f4f7f5;
+        border-left: 5px solid #2e5a44;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 10px;
+        box-shadow: 0 2px 6px rgba(46, 90, 68, 0.05);
+    }
+    .reminder-title {
+        margin-top: 0;
+        color: #2e5a44;
+        font-weight: 600;
+        font-size: 1.15rem;
+    }
+    .reminder-text {
+        color: #444;
+        margin-bottom: 15px;
+        font-size: 1.05rem;
+        line-height: 1.5;
+    }
+    .reminder-quote {
+        font-style: italic;
+        color: #2e5a44;
+        font-weight: 600;
+        margin: 0;
+        font-size: 1rem;
+    }
+    
     /* Styled container for chore cards */
     .card {
         background-color: #ffffff;
@@ -280,6 +364,8 @@ st.markdown("""
         border: 1px solid #e8edea;
         border-left: 4px solid #2e5a44;
         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        position: relative;
+        cursor: pointer;
     }
     .compact-card:hover {
         transform: translateY(-2px);
@@ -313,10 +399,22 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 3px;
+        position: relative;
+        z-index: 2; /* keep clickability above overlay if text is targeted */
     }
     .compact-card-link:hover {
         color: #1d3b2c !important;
         text-decoration: underline;
+    }
+    .compact-card-overlay-link {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        text-decoration: none;
+        background-color: transparent;
     }
     
     /* Fallback image design box */
@@ -348,6 +446,69 @@ st.markdown("""
     /* Text input styling focus */
     .stTextArea textarea {
         border-radius: 8px !important;
+    }
+
+    /* =========================================================================
+       Responsive Mobile Styles (max-width: 768px)
+       ========================================================================= */
+    @media (max-width: 768px) {
+        /* Compress Streamlit's default page margins */
+        .block-container {
+            padding-top: 1.5rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+        
+        /* Downscale header font sizes to prevent vertical overflow / multi-line wrap */
+        .main-title {
+            font-size: 1.65rem !important;
+        }
+        .main-subtitle {
+            font-size: 0.95rem !important;
+            margin-bottom: 10px !important;
+        }
+        .guide-subtitle {
+            font-size: 0.95rem !important;
+            margin-bottom: 10px !important;
+        }
+        
+        /* Compress custom card paddings for better layout fit */
+        .bible-verse-card {
+            padding: 15px 18px !important;
+            margin-bottom: 12px !important;
+        }
+        .bible-verse-text {
+            font-size: 1rem !important;
+        }
+        .bible-verse-ref {
+            font-size: 0.85rem !important;
+        }
+        
+        .reminder-card {
+            padding: 15px !important;
+        }
+        .reminder-title {
+            font-size: 1.05rem !important;
+        }
+        .reminder-text {
+            font-size: 0.95rem !important;
+            margin-bottom: 10px !important;
+        }
+        .reminder-quote {
+            font-size: 0.9rem !important;
+        }
+        
+        .compact-card {
+            padding: 14px 16px !important;
+            border-left-width: 5px !important;
+        }
+        .compact-card-title {
+            font-size: 1rem !important;
+        }
+        .compact-card-assignee {
+            font-size: 1.05rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)

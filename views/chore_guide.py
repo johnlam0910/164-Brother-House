@@ -4,8 +4,12 @@ import json
 import time
 
 # Page Header
-st.markdown("<h1 style='text-align: center; color: #2e5a44;'>📖 House Chore Instruction Guide</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #555; font-size: 1.1rem;'>Clear standards make a happy home! Follow these instructions to perform chores effectively.</p>", unsafe_allow_html=True)
+st.markdown("""
+<div class="main-header">
+    <h1 class="main-title">📖 House Chore Instruction Guide</h1>
+    <p class="guide-subtitle">Clear standards make a happy home! Follow these instructions to perform chores effectively.</p>
+</div>
+""", unsafe_allow_html=True)
 st.markdown("---")
 
 # List of default chores for lookup
@@ -65,9 +69,21 @@ st.markdown("---")
 content_col1, content_col2 = st.columns([3, 2])
 
 with content_col1:
-    st.markdown("### 📝 Cleaning Instructions")
-    for step_num, step in enumerate(details["steps"], 1):
-        st.markdown(f"{step_num}. {step}")
+    col_title, col_btn = st.columns([3, 2])
+    with col_title:
+        st.markdown("### 📝 Cleaning Checklist")
+    with col_btn:
+        if st.button("🔄 Reset Checklist", key=f"reset_{selected_chore}", use_container_width=True):
+            for i in range(len(details["steps"])):
+                st.session_state[f"step_{selected_chore}_{i}"] = False
+            st.rerun()
+    
+    st.caption("Cross off the tasks below as you complete them:")
+    for step_num, step in enumerate(details["steps"]):
+        checkbox_key = f"step_{selected_chore}_{step_num}"
+        if checkbox_key not in st.session_state:
+            st.session_state[checkbox_key] = False
+        st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
 
 with content_col2:
     st.markdown("### 📷 Visual Guide")
@@ -243,12 +259,12 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
 st.markdown("---")
 # Home Reminder alert box
 st.markdown("""
-<div style="background-color: #f4f7f5; border-left: 5px solid #2e5a44; padding: 20px; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 6px rgba(46, 90, 68, 0.05);">
-    <h4 style="margin-top: 0; color: #2e5a44; font-weight: 600; font-size: 1.15rem;">🏠 Home Reminder for the Brothers:</h4>
-    <p style="color: #444; margin-bottom: 15px; font-size: 1.05rem; line-height: 1.5;">
+<div class="reminder-card">
+    <h4 class="reminder-title">🏠 Home Reminder for the Brothers:</h4>
+    <p class="reminder-text">
         Let’s stay on top of our cleaning schedule and look after our shared space together. If you see something that needs attention outside of the roster, please step in and help out.
     </p>
-    <p style="font-style: italic; color: #2e5a44; font-weight: 600; margin: 0; font-size: 1rem;">
+    <p class="reminder-quote">
         "Share with the Lord’s people who are in need. Practice hospitality." (Romans 12:13)
     </p>
 </div>
