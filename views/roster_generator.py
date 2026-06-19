@@ -3,8 +3,6 @@ import random
 import pandas as pd
 import os
 import json
-import zipfile
-import io
 
 # Bible Verses Collection
 BIBLE_VERSES = [
@@ -127,102 +125,7 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
             st.success("House roster lists and website config updated successfully!")
             st.rerun()
 
-# Expandable section for backup and restore
-with st.expander("💾 Backup & Restore House Data", expanded=False):
-    st.markdown("Save a backup of all house settings, chores, instructions, and uploaded photos, or restore them from a backup ZIP file.")
-    
-    col_back, col_rest = st.columns(2)
-    
-    with col_back:
-        st.markdown("### 📥 Download Backup")
-        st.write("Export everything (chores, roster, instructions, configuration, and all photo guides) as a single ZIP file.")
-        
-        # Build ZIP archive in memory
-        zip_buffer = io.BytesIO()
-        try:
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                # Core text and JSON configuration files
-                files_to_backup = [
-                    "brothers.txt",
-                    "chores.txt",
-                    "roster.json",
-                    "config.json",
-                    "instructions.json"
-                ]
-                for file in files_to_backup:
-                    if os.path.exists(file):
-                        zip_file.write(file, arcname=file)
-                
-                # Photos from assets/ directory
-                if os.path.exists("assets"):
-                    for root, dirs, files in os.walk("assets"):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            # Store in ZIP under assets/ directory structure
-                            arcname = os.path.relpath(file_path, start=".")
-                            zip_file.write(file_path, arcname=arcname)
-                            
-            zip_data = zip_buffer.getvalue()
-            
-            # Format filename with timestamp
-            from datetime import datetime
-            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-            st.download_button(
-                label="📥 Download Backup ZIP",
-                data=zip_data,
-                file_name=f"164_brothers_house_backup_{timestamp_str}.zip",
-                mime="application/zip",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"Failed to generate backup: {e}")
-            
-    with col_rest:
-        st.markdown("### 📤 Restore Backup")
-        st.write("Upload a previously saved backup ZIP file to restore all settings and photos. **Warning: This will overwrite current data.**")
-        
-        uploaded_backup = st.file_uploader(
-            "Select backup ZIP file:",
-            type=["zip"],
-            key="backup_zip_uploader"
-        )
-        
-        if uploaded_backup is not None:
-            if st.button("🔥 Confirm & Restore Data", type="primary", use_container_width=True):
-                try:
-                    with zipfile.ZipFile(uploaded_backup, "r") as zip_ref:
-                        # Extract all files
-                        zip_ref.extractall(".")
-                    
-                    # Force reload session state lists from newly extracted files
-                    # 1. Brothers
-                    if os.path.exists("brothers.txt"):
-                        with open("brothers.txt", "r", encoding="utf-8") as f:
-                            st.session_state.brothers_list = [line.strip() for line in f if line.strip()]
-                    # 2. Chores
-                    if os.path.exists("chores.txt"):
-                        with open("chores.txt", "r", encoding="utf-8") as f:
-                            st.session_state.chores_list = [line.strip() for line in f if line.strip()]
-                    # 3. Roster
-                    if os.path.exists("roster.json"):
-                        with open("roster.json", "r", encoding="utf-8") as f:
-                            data = json.load(f)
-                            st.session_state.roster = data.get("roster", {})
-                            st.session_state.off_duty = data.get("off_duty", [])
-                    # 4. Instructions
-                    if os.path.exists("instructions.json"):
-                        with open("instructions.json", "r", encoding="utf-8") as f:
-                            st.session_state.chore_details = json.load(f)
-                    # 5. Config
-                    if os.path.exists("config.json"):
-                        with open("config.json", "r", encoding="utf-8") as f:
-                            config = json.load(f)
-                            st.session_state.app_url = config.get("app_url", "")
-                            
-                    st.success("🎉 All data and photos restored successfully!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Failed to restore backup: {e}")
+
 
 # Roster count mismatch warning (prominent check for mobile viewports where sidebar is collapsed)
 n_brothers = len(st.session_state.brothers_list)
