@@ -31,6 +31,11 @@ selected_chore = st.selectbox(
     index=default_index
 )
 
+# Reset expander open state if the chore changes
+if "last_selected_chore" not in st.session_state or st.session_state.last_selected_chore != selected_chore:
+    st.session_state.last_selected_chore = selected_chore
+    st.session_state.keep_editor_open = False
+
 # Reload instructions from JSON file on page load to pick up manual text edits instantly
 INSTRUCTIONS_FILE = "instructions.json"
 if os.path.exists(INSTRUCTIONS_FILE) and os.path.getsize(INSTRUCTIONS_FILE) > 0:
@@ -128,10 +133,43 @@ with content_col2:
         
 st.markdown("---")
 
+# 4. Upload Key and Expander State determination
+base_chore = selected_chore.split("(")[0].strip()
+chore_key = base_chore.lower().replace(" ", "_")
+uploader_ver_key = f"uploader_ver_{chore_key}"
+if uploader_ver_key not in st.session_state:
+    st.session_state[uploader_ver_key] = 0
+
+uploader_key = f"uploader_{chore_key}_{st.session_state[uploader_ver_key]}"
+
+# Keep expander open on rerun if there are pending files or if an action was performed
+keep_open = False
+if uploader_key in st.session_state and st.session_state[uploader_key]:
+    keep_open = True
+if st.session_state.get("keep_editor_open", False):
+    keep_open = True
+
+# Reset keep_editor_open flag for next runs (so they can collapse it manually if they want)
+st.session_state.keep_editor_open = False
+
 # Edit Chore Details & Photos Expander
-with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
+with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
     st.markdown(f"### Update Guide for **{selected_chore}**")
     
+    # Display save or upload results from the previous rerun
+    if "save_success_msg" in st.session_state:
+        st.success(st.session_state.save_success_msg)
+        del st.session_state.save_success_msg
+    if "upload_results" in st.session_state:
+        for result in st.session_state.upload_results:
+            if "✅" in result:
+                st.success(result)
+            elif "⚠️" in result:
+                st.warning(result)
+            else:
+                st.error(result)
+        del st.session_state.upload_results
+
     # 1. Edit Tools
     current_tools_str = ", ".join(details.get("tools", []))
     edited_tools = st.text_input("Required Tools & Supplies (comma-separated):", value=current_tools_str)
@@ -153,22 +191,15 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                 if st.button("🗑️ Delete", key=f"del_{img_filename}"):
                     try:
                         os.remove(img_path)
-                        st.success(f"Deleted {img_filename}!")
-                        # Force reload details and images
+                        st.session_state.save_success_msg = f"🗑️ Deleted {img_filename}!"
+                        st.session_state.keep_editor_open = True
                         st.rerun()
                     except Exception as e:
                         st.error(f"Failed to delete {img_filename}: {e}")
     else:
         st.info("No photos uploaded for this chore yet.")
         
-    # 4. Upload New Photos (dynamically keyed to clear the uploader widget after a successful save)
-    base_chore = selected_chore.split("(")[0].strip()
-    chore_key = base_chore.lower().replace(" ", "_")
-    uploader_ver_key = f"uploader_ver_{chore_key}"
-    if uploader_ver_key not in st.session_state:
-        st.session_state[uploader_ver_key] = 0
-        
-    uploader_key = f"uploader_{chore_key}_{st.session_state[uploader_ver_key]}"
+    # 4. Upload New Photos
     uploaded_files = st.file_uploader(
         "Upload new photo(s) for this chore:", 
         type=["png", "jpg", "jpeg", "webp"], 
@@ -191,7 +222,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
         try:
             with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
                 json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-            st.success("Successfully updated details in instructions.json!")
+            st.session_state.save_success_msg = "💾 Chore details updated successfully!"
+            st.session_state.keep_editor_open = True
         except Exception as e:
             st.error(f"Failed to save instructions: {e}")
             
@@ -213,8 +245,6 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                     pass
             
             batch_hashes = set()
-            base_chore = selected_chore.split("(")[0].strip()
-            chore_filename = base_chore.lower().replace(" ", "_")
             messages = []
             
             for idx, uploaded_file in enumerate(uploaded_files):
@@ -222,10 +252,10 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                 file_hash = hashlib.md5(file_bytes).hexdigest()
                 
                 if file_hash in existing_hashes:
-                    messages.append(("warning", f"⚠️ Skipped duplicate: '{uploaded_file.name}' has already been uploaded for this chore."))
+                    messages.append(f"⚠️ Skipped duplicate: '{uploaded_file.name}' has already been uploaded for this chore.")
                     continue
                 if file_hash in batch_hashes:
-                    messages.append(("warning", f"⚠️ Skipped batch duplicate: '{uploaded_file.name}' was uploaded multiple times in this batch."))
+                    messages.append(f"⚠️ Skipped batch duplicate: '{uploaded_file.name}' was uploaded multiple times in this batch.")
                     continue
                 
                 batch_hashes.add(file_hash)
@@ -237,23 +267,15 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                 try:
                     with open(save_path, "wb") as f:
                         f.write(file_bytes)
-                    messages.append(("success", f"✅ Saved {new_filename} to assets!"))
+                    messages.append(f"✅ Saved {new_filename} to assets!")
                     existing_hashes.add(file_hash)
                 except Exception as e:
-                    messages.append(("error", f"❌ Failed to save {new_filename}: {e}"))
+                    messages.append(f"❌ Failed to save {new_filename}: {e}")
             
-            # Render all messages and pause briefly so user can see them before rerun
-            for msg_type, text in messages:
-                if msg_type == "success":
-                    st.success(text)
-                elif msg_type == "warning":
-                    st.warning(text)
-                else:
-                    st.error(text)
-            
-            if messages:
-                st.session_state[uploader_ver_key] += 1
-                time.sleep(2.0)
+            # Store upload outcomes in session state to display after rerun
+            st.session_state.upload_results = messages
+            st.session_state[uploader_ver_key] += 1
+            st.session_state.keep_editor_open = True
                     
         st.rerun()
 
@@ -264,7 +286,6 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
     
     col_set, col_rev = st.columns(2)
     DEFAULT_JSON = "instructions_default.json"
-    chore_filename = base_chore.lower().replace(" ", "_")
     
     with col_set:
         if st.button("💾 Set Current as Default", help="Save the current instructions and photos for this chore as the default baseline.", use_container_width=True):
@@ -287,7 +308,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
             try:
                 with open(DEFAULT_JSON, "w", encoding="utf-8") as f:
                     json.dump(default_details, f, ensure_ascii=False, indent=2)
-                st.success("✅ Instructions set as default!")
+                st.session_state.save_success_msg = "✅ Instructions set as default baseline!"
+                st.session_state.keep_editor_open = True
             except Exception as e:
                 st.error(f"❌ Failed to save default instructions: {e}")
                 
@@ -316,11 +338,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                         except:
                             pass
             if copied_count > 0:
-                st.success(f"✅ Saved {copied_count} photos to default baseline!")
-            else:
-                st.info("ℹ️ No photos to save to default baseline.")
-                
-            time.sleep(1.5)
+                st.session_state.save_success_msg += f" (Copied {copied_count} photos to default baseline)"
+            
             st.rerun()
             
     with col_rev:
@@ -343,7 +362,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                 try:
                     with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
                         json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-                    st.success("✅ Reverted instructions to default!")
+                    st.session_state.save_success_msg = "✅ Reverted instructions to default baseline!"
+                    st.session_state.keep_editor_open = True
                 except Exception as e:
                     st.error(f"❌ Failed to restore instructions: {e}")
                     reverted = False
@@ -376,11 +396,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                             except:
                                 pass
                 if restored_count > 0:
-                    st.success(f"✅ Restored {restored_count} photos from default baseline!")
-                else:
-                    st.info("ℹ️ No default photos to restore.")
+                    st.session_state.save_success_msg += f" (Restored {restored_count} photos from default baseline)"
                 
-                time.sleep(1.5)
                 st.rerun()
 st.markdown("---")
 # Home Reminder alert box
