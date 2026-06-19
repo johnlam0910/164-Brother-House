@@ -73,7 +73,9 @@ with content_col2:
     st.markdown("### 📷 Visual Guide")
     
     # Image Loading Logic: Scan for all matching files starting with the chore name
-    chore_filename = selected_chore.lower().replace(" ", "_")
+    # Strip parenthetical notes to find the base chore filename for matching assets
+    base_chore = selected_chore.split("(")[0].strip()
+    chore_filename = base_chore.lower().replace(" ", "_")
     valid_extensions = ('.jpg', '.jpeg', '.png', '.webp')
     found_images = []
     
@@ -144,7 +146,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
         st.info("No photos uploaded for this chore yet.")
         
     # 4. Upload New Photos (dynamically keyed to clear the uploader widget after a successful save)
-    chore_key = selected_chore.lower().replace(" ", "_")
+    base_chore = selected_chore.split("(")[0].strip()
+    chore_key = base_chore.lower().replace(" ", "_")
     uploader_ver_key = f"uploader_ver_{chore_key}"
     if uploader_ver_key not in st.session_state:
         st.session_state[uploader_ver_key] = 0
@@ -194,7 +197,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                     pass
             
             batch_hashes = set()
-            chore_filename = selected_chore.lower().replace(" ", "_")
+            base_chore = selected_chore.split("(")[0].strip()
+            chore_filename = base_chore.lower().replace(" ", "_")
             messages = []
             
             for idx, uploaded_file in enumerate(uploaded_files):

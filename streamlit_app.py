@@ -12,14 +12,14 @@ DEFAULT_BROTHERS = [
 ]
 
 DEFAULT_CHORES = [
-    "Staircase", "Back Yard", "Front Yard",
-    "Dining Table", "Mop Floor", "Toilet",
+    "Staircase (Sweep and Mop Second&Third Floor)", "Back Yard", "Front Yard",
+    "Dining Table (Sweep and Mop Second&Third Floor)", "Mop Floor", "Toilet",
     "Inside Kitchen", "Sweep Floor", "Outside Kitchen"
 ]
 
 # Default Chore Content Definitions (used as fallbacks to initialize instructions.json)
 DEFAULT_INSTRUCTIONS = {
-    "Staircase": {
+    "Staircase (Sweep and Mop Second&Third Floor)": {
         "tools": [
             "Broom / Hand vacuum",
             "Microfiber cloth",
@@ -56,7 +56,7 @@ DEFAULT_INSTRUCTIONS = {
             "Find the dustpan and broom outside the front yard ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDFHIqgph7ZTIHMBtaCMufCAZaQDOZ8DpnRFfeaBx6w4HA?e=cmx4xA))"
         ]
     },
-    "Dining Table": {
+    "Dining Table (Sweep and Mop Second&Third Floor)": {
         "tools": [
             "Sponges",
             "Dish soap / Surface spray",
