@@ -256,6 +256,132 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=False):
                 time.sleep(2.0)
                     
         st.rerun()
+
+    # 6. Default Baseline Manager
+    st.markdown("---")
+    st.markdown("#### 💾 Default Baseline Manager")
+    st.caption("Save your custom guidelines and photos as the default baseline, or revert to it if you make mistakes.")
+    
+    col_set, col_rev = st.columns(2)
+    DEFAULT_JSON = "instructions_default.json"
+    chore_filename = base_chore.lower().replace(" ", "_")
+    
+    with col_set:
+        if st.button("💾 Set Current as Default", help="Save the current instructions and photos for this chore as the default baseline.", use_container_width=True):
+            import shutil
+            
+            # 1. Update instructions_default.json
+            default_details = {}
+            if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
+                try:
+                    with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
+                        default_details = json.load(f)
+                except:
+                    pass
+            
+            default_details[selected_chore] = st.session_state.chore_details.get(selected_chore, {
+                "tools": [],
+                "steps": []
+            })
+            
+            try:
+                with open(DEFAULT_JSON, "w", encoding="utf-8") as f:
+                    json.dump(default_details, f, ensure_ascii=False, indent=2)
+                st.success("✅ Instructions set as default!")
+            except Exception as e:
+                st.error(f"❌ Failed to save default instructions: {e}")
+                
+            # 2. Copy current photos to assets_default/
+            if not os.path.exists("assets_default"):
+                os.makedirs("assets_default")
+                
+            # Remove old default photos for this chore
+            for file in os.listdir("assets_default"):
+                name, ext = os.path.splitext(file)
+                if name.startswith(chore_filename):
+                    try:
+                        os.remove(os.path.join("assets_default", file))
+                    except:
+                        pass
+                        
+            # Copy active photos
+            copied_count = 0
+            if os.path.exists("assets"):
+                for file in os.listdir("assets"):
+                    name, ext = os.path.splitext(file)
+                    if name.startswith(chore_filename):
+                        try:
+                            shutil.copy(os.path.join("assets", file), os.path.join("assets_default", file))
+                            copied_count += 1
+                        except:
+                            pass
+            if copied_count > 0:
+                st.success(f"✅ Saved {copied_count} photos to default baseline!")
+            else:
+                st.info("ℹ️ No photos to save to default baseline.")
+                
+            time.sleep(1.5)
+            st.rerun()
+            
+    with col_rev:
+        if st.button("⏪ Revert to Default", help="Restore the saved default instructions and photos for this chore.", use_container_width=True):
+            import shutil
+            
+            # 1. Restore instructions from instructions_default.json
+            reverted = False
+            if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
+                try:
+                    with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
+                        default_details = json.load(f)
+                    if selected_chore in default_details:
+                        st.session_state.chore_details[selected_chore] = default_details[selected_chore]
+                        reverted = True
+                except:
+                    pass
+            
+            if reverted:
+                try:
+                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                    st.success("✅ Reverted instructions to default!")
+                except Exception as e:
+                    st.error(f"❌ Failed to restore instructions: {e}")
+                    reverted = False
+            else:
+                st.warning("⚠️ No saved default baseline found for this chore!")
+                
+            if reverted:
+                # 2. Restore photos from assets_default/
+                # Delete active photos
+                if os.path.exists("assets"):
+                    for file in os.listdir("assets"):
+                        name, ext = os.path.splitext(file)
+                        if name.startswith(chore_filename):
+                            try:
+                                os.remove(os.path.join("assets", file))
+                            except:
+                                pass
+                                
+                # Copy back from assets_default/
+                restored_count = 0
+                if os.path.exists("assets_default"):
+                    for file in os.listdir("assets_default"):
+                        name, ext = os.path.splitext(file)
+                        if name.startswith(chore_filename):
+                            try:
+                                if not os.path.exists("assets"):
+                                    os.makedirs("assets")
+                                shutil.copy(os.path.join("assets_default", file), os.path.join("assets", file))
+                                restored_count += 1
+                            except:
+                                pass
+                if restored_count > 0:
+                    st.success(f"✅ Restored {restored_count} photos from default baseline!")
+                else:
+                    st.info("ℹ️ No default photos to restore.")
+                
+                time.sleep(1.5)
+                st.rerun()
 st.markdown("---")
 # Home Reminder alert box
 st.markdown("""
