@@ -3,6 +3,7 @@ import random
 import pandas as pd
 import os
 import json
+import urllib.parse
 
 # Bible Verses Collection
 BIBLE_VERSES = [
@@ -207,6 +208,7 @@ else:
     grid_html = ["<div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px;'>"]
     
     for chore, assignees in roster_items:
+        encoded_chore = urllib.parse.quote(chore)
         grid_html.append(f"""<div class="compact-card">
 <div class="compact-card-title">{chore}</div>
 <div class="compact-card-subtitle">Assigned to:</div>
@@ -214,7 +216,7 @@ else:
 <div style="margin-top: 4px;">
 <span class="compact-card-link">📖 View Guide</span>
 </div>
-<a href="/chore_guide?chore={chore}" target="_self" class="compact-card-overlay-link"></a>
+<a href="/chore_guide?chore={encoded_chore}" target="_self" class="compact-card-overlay-link"></a>
 </div>""")
         
     grid_html.append("</div>")

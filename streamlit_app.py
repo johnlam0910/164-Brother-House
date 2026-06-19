@@ -12,135 +12,125 @@ DEFAULT_BROTHERS = [
 ]
 
 DEFAULT_CHORES = [
-    "Staircase (Sweep and Mop Second&Third Floor)", "Back Yard", "Front Yard",
-    "Dining Table (Sweep and Mop Second&Third Floor)", "Mop Floor", "Toilet",
+    "Staircase (Sweep Second & Third Floor)", "Back Yard", "Front Yard",
+    "Dining Table + (Mop Second & Third Floor)", "Mop Floor", "Toilet",
     "Inside Kitchen", "Sweep Floor", "Outside Kitchen"
 ]
 
 # Default Chore Content Definitions (used as fallbacks to initialize instructions.json)
 DEFAULT_INSTRUCTIONS = {
-    "Staircase (Sweep and Mop Second&Third Floor)": {
+    "Staircase (Sweep Second & Third Floor)": {
         "tools": [
-            "Broom / Hand vacuum",
-            "Microfiber cloth",
-            "All-purpose spray"
+            "(Inside Kitchen) Broom and Dustpan"
         ],
         "steps": [
-            "Main Wooden Staircase and floor cleanning for second and third floor ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBeb6EbGKbWRbZamY-Fkv-6AeLNs0PmXjMQp3szISo7uN4?e=B8SB6Q))",
-            "Sweep and Wipe through the stair, ensure to clean the dust on the side area. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAVevAreS1hR5rjMhTM7uW_Ael_2PGkKy4uY9hoMwfcfgU?e=G0FEpM))",
-            "Sweep and mop the second floor ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAbEtWRDM53Tp9MQ3PHURjXAQuHHKhimd5f6ZhikbK8fk0?e=BdWTbA))",
-            "Sweep and mop the third floor ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCtgC5ftj4vQqAd3g-tl7otAdt2f2F3NKuRqqjLU6ZZjls?e=52ptNw))"
+            "Find the Broom and Dustpan in the inside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQChwfeDL6W-QINAS8jGBevgAao0F8_1MwSk1ZoQTK4768I?e=5ULqD1))",
+            "Sweep through the dust on the wooden staircase, second, and third floor (cleaning all dust from the side areas). ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAVevAreS1hR5rjMhTM7uW_Ael_2PGkKy4uY9hoMwfcfgU?e=G0FEpM))",
+            "Return the broom and dustpan to the original place."
         ],
-        "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBeb6EbGKbWRbZamY-Fkv-6AeLNs0PmXjMQp3szISo7uN4?e=B8SB6Q"
+        "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBeb6EbGKbWRbZamY-Fkv-6AeLNs0PmXjMQp3szlSo7uN4?e=B8SB6Q"
     },
     "Back Yard": {
         "tools": [
-            "Outdoor push broom",
-            "Trash bags",
-            "Garden hose"
+            "(Back Yard) Broom and Dustpan"
         ],
         "steps": [
-            "Sweep loose leaves, dirt, and debris. Clean the tiled floor area and ensure shoes, racks, and detergent bottles are placed systematically. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCP8VIJl2_XSbQMMy_-S2I2AUHBRZa8DvdtBZiBIiJaTTU?e=Qr72Gg))",
-            "Find the dustpan and broom outside the backyard ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAhpCgToY7UR4iY_kM5tEBTAa-VZ97BMAZq-Zviyz5HsA0?e=tza5Uq))"
+            "Find the Broom and Dustpan in the Back Yard. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAhpCgToY7UR4iY_kM5tEBTAa-VZ97BMAZq-Zviyz5HsA0?e=tza5Uq))",
+            "Sweep away all loose leaves, dirt, and debris from the floor area. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCP8VIJl2_XSbQMMy_-S2I2AUHBRZa8DvdtBZiBIiJaTTU?e=Qr72Gg))",
+            "Organize all shoes and shoe racks."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCP8VIJl2_XSbQMMy_-S2I2AUHBRZa8DvdtBZiBIiJaTTU?e=Qr72Gg"
     },
     "Front Yard": {
         "tools": [
-            "Outdoor broom",
-            "Weeding tool",
-            "Watering can / Hose",
-            "Gardening gloves"
+            "(Front Yard) Broom and Dustpan"
         ],
         "steps": [
-            "Sweep loose leaves, dirt, and debris. Clean the tiled floor area and ensure shoes, racks are placed systematically. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQB3RR26KfwlT55yxCG3zTBiAdeVzo0kwyhtdY4T4c_Yq18?e=IAGron))",
-            "Sweep loose leaves, dirt, and debris ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCzKjccDTgNTpt9hVQGSM4kAYwZFCrjJWtyk7c7uD6Yr-k?e=SAPOHl))",
-            "Find the dustpan and broom outside the front yard ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDFHIqgph7ZTIHMBtaCMufCAZaQDOZ8DpnRFfeaBx6w4HA?e=cmx4xA))"
+            "Find the Broom and Dustpan in the Back Yard. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDFHIqgph7ZTIHMBtaCMufCAZaQDOZ8DpnRFfeaBx6w4HA?e=cmx4xA))",
+            "Sweep away all loose leaves, dirt, and debris from the floor area. ([📷 Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCzKjccDTgNTpt9hVQGSM4kAYwZFCrjJWtyk7c7uD6Yr-k?e=SAPOHl))",
+            "Organize all shoes and shoe racks. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQB3RR26KfwlT55yxCG3zTBiAdeVzo0kwyhtdY4T4c_Yq18?e=IAGron))"
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQB3RR26KfwlT55yxCG3zTBiAdeVzo0kwyhtdY4T4c_Yq18?e=IAGron"
     },
-    "Dining Table (Sweep and Mop Second&Third Floor)": {
+    "Dining Table + (Mop Second & Third Floor)": {
         "tools": [
-            "Sponges",
-            "Dish soap / Surface spray",
-            "Dry dishcloth"
+            "(Kitchen) Table Cloth",
+            "(Store room) Roll tissue",
+            "(Backyard) Mop and Bucket",
+            "(Outside Kitchen) Floor cleaner"
         ],
         "steps": [
-            "Use the cloth beside the sink to clean the dining table and edible things. Separate and use another cloth if you use chemincal liquid, avoid to mix together and posioning. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBem4NV_fdqQrrgvQYM5DR-AXyo_j3J7muzYrYWj8Q9qDA?e=AiefzN))",
-            "Wipe Glass Dining Table ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDhwPOPAClEQrtDEI08xHjVAT1yU7SDxUWefgNhjbAfHxM?e=EoFsxe))",
-            "Wipe Wodden Table ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAMzyWH_tZxTZkphbylx7BOAW98KC3f4OHx7kbTVv2joDM?e=CZNMhX))",
-            "Wipe Round Table. Restock tissue boxes, remove trash or used tissue. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCYoEHYa0KVQIW2ATx6M6MgARsFYqziZCvUQPQ4EfUV7DA?e=9wwOjF))"
+            "Find the table towel beside the sink in either the inside or outside kitchen. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBem4NV_fdqQrrgvQYM5DR-AXyo_j3J7muzYrYWj8Q9qDA?e=AiefzN))",
+            "Wipe the glass ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDhwPOPAClEQrtDEI08xHjVAT1yU7SDxUWefgNhjbAfHxM?e=EoFsxe)), wooden ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAMzyWH_tZxTZkphbylx7BOAW98KC3f4OHx7kbTVv2joDM?e=CZNMhX)), and round ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCYoEHYa0KVQIW2ATx6M6MgARsFYqziZCvUQPQ4EfUV7DA?e=9wwOjF)) dining tables.",
+            "Remove trash or used tissues from the tables and refill the tissue.",
+            "Find the Mop and Bucket in the Backyard ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAKKKyjdcZfQZRMFrM9NMOQATZofBJXZULc2EblPiWNsb8?e=1s4hm3)), find the floor cleaner in the outside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBTO0uNpw3TQpGaCNAmPR8RAcOULDU15314DBrbtaS_du8?e=EYUgIs)).",
+            "Mop the staircase, second floor ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAbEtWRDM53Tp9MQ3PHURjXAQuHHKhimd5f6ZhikbK8fk0?e=BdWTbA)), and third floor ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCtgC5ftj4vQqAd3g-tl7otAdt2f2F3NKuRqqjLU6ZZjls?e=52ptNw)).",
+            "Wash the mop head thoroughly after completing the floor routine.",
+            "Return the mop and bucket to the original place."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBem4NV_fdqQrrgvQYM5DR-AXyo_j3J7muzYrYWj8Q9qDA?e=AiefzN"
     },
     "Mop Floor": {
         "tools": [
-            "Mop",
-            "Bucket",
-            "Floor cleaner solution",
-            "Warm water"
+            "(Backyard) Mop and Bucket",
+            "(Outside Kitchen) Floor cleaner"
         ],
         "steps": [
-            "Find the mop handle and bucket outside backyard. Wash the mop head after every interior floor routine. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAKKKyjdcZfQZRMFrM9NMOQATZofBJXZULc2EblPiWNsb8?e=1s4hm3))",
-            "Indoor Broom & Dustpan Inventory: Store in the inside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQChwfeDL6W-QINAS8jGBevgAao0F8_1MwSk1ZoQTK4768I?e=5ULqD1))",
-            "You can find all the Chemical and floor cleaners for mopping and cleanning toilet can be found in the floor outside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBTO0uNpw3TQpGaCNAmPR8RAcOULDU15314DBrbtaS_du8?e=EYUgIs))"
+            "Find the Mop and Bucket in the Backyard ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAKKKyjdcZfQZRMFrM9NMOQATZofBJXZULc2EblPiWNsb8?e=1s4hm3)), find the floor cleaner in the outside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBTO0uNpw3TQpGaCNAmPR8RAcOULDU15314DBrbtaS_du8?e=EYUgIs)).",
+            "Mop through the ground floor (includes the children's room, inside and outside kitchen).",
+            "Wash the mop head thoroughly after completing the floor routine.",
+            "Return the mop and bucket to the original place."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAKKKyjdcZfQZRMFrM9NMOQATZofBJXZULc2EblPiWNsb8?e=1s4hm3"
     },
     "Toilet": {
         "tools": [
-            "Toilet brush",
-            "Disinfectant spray",
-            "Glass cleaner",
-            "Paper towels / Cleaning cloths"
+            "(Outside Kitchen) Toilet Cleaner",
+            "(Store room) Roll tissue"
         ],
         "steps": [
-            "Clean the white ceramic basin surface. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDtLDHZ7swJRKT85lTf8nqtAV4JkRSrBXK4sLFCuboYDeE?e=pQJDyz))",
-            "Toilet Bowl Thorough Disinfection: Apply specialized toilet bowl cleaner inside the rim, scrub with a brush, and flush. Sanitize both sides of the seat, the outer lid, and the flush tank handle using disinfectant. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBAoceL6SQmTrRz4I79nb_VAQtg2fLipnPM-u9QQyauMHA?e=BY9naT))",
-            "You can find all the Chemical and floor cleaners for mopping and cleanning toilet can be found in the floor outside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBTO0uNpw3TQpGaCNAmPR8RAcOULDU15314DBrbtaS_du8?e=EYUgIs))"
+            "Clean the white hand wash basin and mirror surface. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDtLDHZ7swJRKT85lTf8nqtAV4JkRSrBXK4sLFCuboYDeE?e=pQJDyz))",
+            "Clean both sides of the seat, the outer lid, and the flush handle with a toilet brush and cleaner. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBAoceL6SQmTrRz4I79nb_VAQtg2fLipnPM-u9QQyauMHA?e=BY9naT))",
+            "Clean the floor and the remaining hair on the floor drain cover.",
+            "Refill the empty toilet tissue."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDtLDHZ7swJRKT85lTf8nqtAV4JkRSrBXK4sLFCuboYDeE?e=pQJDyz"
     },
     "Inside Kitchen": {
         "tools": [
-            "Dish sponge",
-            "Degreaser spray",
-            "Stainless steel cleaner",
-            "Scouring pad"
+            "Kitchen Cloth"
         ],
         "steps": [
-            "Clean the table surface and tidy up ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBBFyCtK81hQaQmXzeE8tgxAZQMnVvpk2815Yv0uMn0jlo?e=uh9S7O))",
-            "Remove all the food wastes on the sink. Use dishwashing liquid and a non-scratch scrub pad to clean the interior basin. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDljE4kVyHASrmHtwyqQk6vAbDhp9inj-HU7o2aC0Korcs?e=x7ciph))",
-            "Water Purifier Exterior Care: Use a cloth to wipe the touch screen panel and exterior body of the PuriCare machine. Do not use wet cloths directly on electronic displays or underlying electrical cords. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDEH6KTxtP0QJekE4-IbhzHAWc2uergwFOmyFABBZnG35c?e=fyv62G))",
-            "Clean the sink, remove the food waste ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDZ8iulfJCmQpdNM7LVVu0nATShkNxBPLsXn1UspjpkGos?e=ILTrG5))",
-            "Use a dry, clean cloth to dry the water stored in the sink. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDMvmt-wFGbQ6ASztpwxAhaAc3RxhK-wxqL1PEVjgPD99U?e=x4d27E))",
-            "Microwave Cleaning: Remove the glass turntable plate and wash it separately. Clean the interior ceilings and walls. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCUAk_RdcgtTboAL0JsRayIAS93xZAd5n3CmC7b86HYtY0?e=wRqpn6))",
-            "Use the cloth beside the sink to clean the dining table and edible things. Separate and use another cloth if you use chemincal liquid, avoid to mix together and posioning. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBem4NV_fdqQrrgvQYM5DR-AXyo_j3J7muzYrYWj8Q9qDA?e=AiefzN))"
+            "Find the designated cloth beside the sink for cleaning the kitchen table. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBBFyCtK81hQaQmXzeE8tgxAZQMnVvpk2815Yv0uMn0jlo?e=uh9S7O))",
+            "Tidy up the utilities on the table.",
+            "Clear food waste from the sink and wash the basin with dishwashing liquid and a non-scratch pad. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDljE4kVyHASrmHtwyqQk6vAbDhp9inj-HU7o2aC0Korcs?e=x7ciph))",
+            "Wipe the water machine ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDEH6KTxtP0QJekE4-IbhzHAWc2uergwFOmyFABBZnG35c?e=fyv62G)) and dry the remaining water in the sink ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQDMvmt-wFGbQ6ASztpwxAhaAc3RxhK-wxqL1PEVjgPD99U?e=x4d27E)).",
+            "Clean the microwave oven (surface and interior). ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQCUAk_RdcgtTboAL0JsRayIAS93xZAd5n3CmC7b86HYtY0?e=wRqpn6))",
+            "Clean the fridge (surface and interior), and clean up any spoiled or expired foods."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQBBFyCtK81hQaQmXzeE8tgxAZQMnVvpk2815Yv0uMn0jlo?e=uh9S7O"
     },
     "Sweep Floor": {
         "tools": [
-            "Broom",
-            "Dustpan",
-            "Hand brush"
+            "(Inside Kitchen) Broom and Dustpan"
         ],
         "steps": [
-            "Find the mop handle and bucket outside backyard. Wash the mop head after every interior floor routine. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAKKKyjdcZfQZRMFrM9NMOQATZofBJXZULc2EblPiWNsb8?e=1s4hm3))",
-            "Indoor Broom & Dustpan Inventory: Store in the inside kitchen ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQChwfeDL6W-QINAS8jGBevgAao0F8_1MwSk1ZoQTK4768I?e=5ULqD1))"
+            "Find the Broom and Dustpan in the inside kitchen. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQChwfeDL6W-QINAS8jGBevgAao0F8_1MwSk1ZoQTK4768I?e=5ULqD1))",
+            "Sweep through the dust on the ground floor (includes the children's room, inside and outside kitchen).",
+            "Return the broom and dustpan to the original place."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAKKKyjdcZfQZRMFrM9NMOQATZofBJXZULc2EblPiWNsb8?e=1s4hm3"
     },
     "Outside Kitchen": {
         "tools": [
-            "Wire grill brush",
-            "Warm soapy water",
-            "Heavy-duty sponge",
-            "Outdoor broom"
+            "Kitchen Cloth"
         ],
         "steps": [
-            "Wipe the surface and ensure the kitchen utlities are tidy. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAaIYwqEMztSYWg5w66MFZPAaksFQB4vYJuo0Yc55J823I?e=ap23ke))",
-            "These haning towel for drying up the utilities. Do not use them for cleaning purpose, ensure they are clean. Put them to the washing machine and dry out and hang to the original position in every cleanning rountine. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQD7fQfgo2igTpS67CoBv9_-AadLqzFhZbCNcZJcLKqTsU0?e=FzOF4T))"
+            "Find the designated cloth beside the sink for cleaning the kitchen table. ([📷 Image Guide](https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAaIYwqEMztSYWg5w66MFZPAaksFQB4vYJuo0Yc55J823I?e=ap23ke))",
+            "Tidy up the utilities on the table.",
+            "Clear food waste from the sink and wash the basin with dishwashing liquid and a non-scratch pad.",
+            "Use dishwashing liquid to clean the cooking area and the wall.",
+            "Clean the public fridge (surface and interior), and clean up any spoiled, expired foods, or leftovers."
         ],
         "onedrive_url": "https://entuedu-my.sharepoint.com/:i:/g/personal/chunwai001_e_ntu_edu_sg/IQAaIYwqEMztSYWg5w66MFZPAaksFQB4vYJuo0Yc55J823I?e=ap23ke"
     }

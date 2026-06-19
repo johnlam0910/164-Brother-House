@@ -121,7 +121,8 @@ with content_col2:
     # Image Loading Logic: Scan for all matching files starting with the chore name
     # Strip parenthetical notes to find the base chore filename for matching assets
     base_chore = selected_chore.split("(")[0].strip()
-    chore_filename = base_chore.lower().replace(" ", "_")
+    clean_base = "".join(c for c in base_chore if c.isalnum() or c.isspace() or c == "_")
+    chore_filename = clean_base.lower().strip().replace(" ", "_")
     valid_extensions = ('.jpg', '.jpeg', '.png', '.webp')
     found_images = []
     
@@ -160,7 +161,8 @@ st.markdown("---")
 
 # 4. Upload Key and Expander State determination
 base_chore = selected_chore.split("(")[0].strip()
-chore_key = base_chore.lower().replace(" ", "_")
+clean_base = "".join(c for c in base_chore if c.isalnum() or c.isspace() or c == "_")
+chore_key = clean_base.lower().strip().replace(" ", "_")
 uploader_ver_key = f"uploader_ver_{chore_key}"
 if uploader_ver_key not in st.session_state:
     st.session_state[uploader_ver_key] = 0
