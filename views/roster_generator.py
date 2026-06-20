@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import json
 import urllib.parse
+from utils import encode_roster
 
 # Bible Verses Collection
 BIBLE_VERSES = [
@@ -261,8 +262,20 @@ else:
             # If they entered the full subpage path, strip it out to point to the main page
             if base_url.lower().endswith("/chore_guide"):
                 base_url = base_url[:-12].rstrip("/")
+            
+            # Encode the active roster state to include it in the URL
+            try:
+                encoded_roster = encode_roster(
+                    st.session_state.roster,
+                    st.session_state.off_duty,
+                    st.session_state.get("selected_verse")
+                )
+                share_url = f"{base_url}?r={encoded_roster}"
+            except Exception:
+                share_url = base_url
+
             whatsapp_lines.append("")
-            whatsapp_lines.append(f"📖 *View Detailed Guide:* {base_url}")
+            whatsapp_lines.append(f"📖 *View Detailed Guide:* {share_url}")
             
         # Completion checkmark instructions
         whatsapp_lines.append("")
@@ -308,3 +321,9 @@ else:
             
     with c_btn3:
         st.caption("Tip: You can print this page using your browser's print shortcut (Ctrl+P or Cmd+P) to post it on the fridge!")
+
+# Show success toast if shared roster was loaded
+if st.session_state.get("show_shared_roster_toast"):
+    st.toast("📥 Loaded shared roster from link!", icon="✅")
+    # Clear the flag so it only shows once
+    del st.session_state.show_shared_roster_toast

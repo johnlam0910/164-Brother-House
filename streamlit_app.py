@@ -1,10 +1,46 @@
 import streamlit as st
 import os
 import json
+from utils import decode_roster
+
+# 1. Set global page configuration (mandatory call as the first Streamlit command)
+st.set_page_config(page_title="House Chores System", page_icon="🏠", layout="wide")
 
 BROTHERS_FILE = "brothers.txt"
 CHORES_FILE = "chores.txt"
 ROSTER_FILE = "roster.json"
+
+# Parse shared roster query parameters
+shared_roster_param = st.query_params.get("r", None)
+shared_roster = None
+shared_off_duty = None
+shared_verse = None
+
+if shared_roster_param:
+    shared_roster, shared_off_duty, shared_verse = decode_roster(shared_roster_param)
+    if shared_roster is not None:
+        # Override the current session state or file
+        st.session_state.roster = shared_roster
+        st.session_state.off_duty = shared_off_duty if shared_off_duty is not None else []
+        if shared_verse is not None:
+            st.session_state.selected_verse = shared_verse
+        
+        # Save to roster.json for persistence
+        try:
+            with open(ROSTER_FILE, "w", encoding="utf-8") as f:
+                json.dump({
+                    "roster": st.session_state.roster,
+                    "off_duty": st.session_state.off_duty
+                }, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            pass
+            
+        # Set a flag to trigger a success toast message in views/roster_generator.py
+        st.session_state.show_shared_roster_toast = True
+        
+        # Clean up the URL query parameter so it doesn't stay in the browser
+        if "r" in st.query_params:
+            del st.query_params["r"]
 
 DEFAULT_BROTHERS = [
     "John", "David", "Michael", "James", 
@@ -202,8 +238,7 @@ guide_page = st.Page("views/chore_guide.py", title="Chore Guide", icon="📖", u
 
 pg = st.navigation([roster_page, guide_page])
 
-# 3. Set global page configuration (mandatory call before other streamlit visual commands)
-st.set_page_config(page_title="House Chores System", page_icon="🏠", layout="wide")
+# 3. Set global page configuration (done at startup)
 
 # 4. Global CSS Styles for warm, premium, community-themed aesthetics (Google Font "Outfit")
 st.markdown("""
