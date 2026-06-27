@@ -327,57 +327,61 @@ with st.expander("✏️ Edit Chore Details", expanded=keep_open):
             if st.button("⏪ Revert to Default", help="Restore the saved default instructions and photos for this chore.", use_container_width=True):
                 import shutil
                 
-                # 1. Restore instructions from instructions_default.json
-                reverted = False
-                if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
-                    try:
-                        with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
-                            default_details = json.load(f)
-                        if selected_chore in default_details:
-                            st.session_state.chore_details[selected_chore] = default_details[selected_chore]
-                            reverted = True
-                    except:
-                        pass
-                
-                if reverted:
-                    try:
-                        with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
-                            json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-                        st.session_state.save_success_msg = "✅ Reverted instructions to default baseline!"
-                        st.session_state.keep_editor_open = True
-                    except Exception as e:
-                        st.error(f"❌ Failed to restore instructions: {e}")
-                        reverted = False
-                else:
-                    st.warning("⚠️ No saved default baseline found for this chore!")
+                with st.spinner("⏪ Reverting chore guide and syncing to cloud database..."):
+                    # 1. Restore instructions from instructions_default.json
+                    reverted = False
+                    if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
+                        try:
+                            with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
+                                default_details = json.load(f)
+                            if selected_chore in default_details:
+                                st.session_state.chore_details[selected_chore] = default_details[selected_chore]
+                                reverted = True
+                        except:
+                            pass
                     
-                if reverted:
-                    # 2. Restore photos from assets_default/
-                    # Delete active photos
-                    if os.path.exists("assets"):
-                        for file in os.listdir("assets"):
-                            if is_chore_file(file, chore_filename):
-                                try:
-                                    os.remove(os.path.join("assets", file))
-                                except:
-                                    pass
-                                    
-                    # Copy back from assets_default/
-                    restored_count = 0
-                    if os.path.exists("assets_default"):
-                        for file in os.listdir("assets_default"):
-                            if is_chore_file(file, chore_filename):
-                                try:
-                                    if not os.path.exists("assets"):
-                                        os.makedirs("assets")
-                                    shutil.copy(os.path.join("assets_default", file), os.path.join("assets", file))
-                                    restored_count += 1
-                                except:
-                                    pass
-                    if restored_count > 0:
-                        st.session_state.save_success_msg += f" (Restored {restored_count} photos from default baseline)"
-                    
-                    st.rerun()
+                    if reverted:
+                        try:
+                            if get_supabase_client() is not None:
+                                db_set("chore_details", st.session_state.chore_details)
+                                
+                            with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                                json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                            st.session_state.save_success_msg = "✅ Reverted instructions to default baseline!"
+                            st.session_state.keep_editor_open = True
+                        except Exception as e:
+                            st.error(f"❌ Failed to restore instructions: {e}")
+                            reverted = False
+                    else:
+                        st.warning("⚠️ No saved default baseline found for this chore!")
+                        
+                    if reverted:
+                        # 2. Restore photos from assets_default/
+                        # Delete active photos
+                        if os.path.exists("assets"):
+                            for file in os.listdir("assets"):
+                                if is_chore_file(file, chore_filename):
+                                    try:
+                                        os.remove(os.path.join("assets", file))
+                                    except:
+                                        pass
+                                        
+                        # Copy back from assets_default/
+                        restored_count = 0
+                        if os.path.exists("assets_default"):
+                            for file in os.listdir("assets_default"):
+                                if is_chore_file(file, chore_filename):
+                                    try:
+                                        if not os.path.exists("assets"):
+                                            os.makedirs("assets")
+                                        shutil.copy(os.path.join("assets_default", file), os.path.join("assets", file))
+                                        restored_count += 1
+                                    except:
+                                        pass
+                        if restored_count > 0:
+                            st.session_state.save_success_msg += f" (Restored {restored_count} photos from default baseline)"
+                        
+                        st.rerun()
 
         # 6. Inactive & Backup Guides (for renames, deletions, and combinations)
         inactive_chores = [c for c in st.session_state.chore_details.keys() if c not in chores_list]

@@ -312,10 +312,11 @@ if generate_btn:
             "roster": new_roster,
             "off_duty": off_duty
         }
-        if get_supabase_client() is not None:
-            db_set("roster", roster_data)
-        with open("roster.json", "w", encoding="utf-8") as f:
-            json.dump(roster_data, f, ensure_ascii=False, indent=2)
+        with st.spinner("🎲 Saving generated roster to cloud database..."):
+            if get_supabase_client() is not None:
+                db_set("roster", roster_data)
+            with open("roster.json", "w", encoding="utf-8") as f:
+                json.dump(roster_data, f, ensure_ascii=False, indent=2)
     
         # Automatically select a new Bible verse to go with the new roster
         st.session_state.selected_verse = random.choice(BIBLE_VERSES)
