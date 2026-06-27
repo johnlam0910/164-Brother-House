@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import json
 import urllib.parse
-from utils import encode_roster
+
 
 # Bible Verses Collection
 BIBLE_VERSES = [
@@ -241,6 +241,16 @@ else:
     with st.expander("📱 Copy for WhatsApp / Group Chat", expanded=True):
         st.markdown("Click the copy icon on the top-right of the text block below to copy and paste directly into WhatsApp:")
         verse = st.session_state.selected_verse
+        
+        # Determine base URL for chore guide deep links
+        app_url_configured = bool(st.session_state.get("app_url"))
+        base_url = ""
+        if app_url_configured:
+            base_url = st.session_state.app_url.rstrip("/")
+            # If they entered the full subpage path, strip it out to point to the main page
+            if base_url.lower().endswith("/chore_guide"):
+                base_url = base_url[:-12].rstrip("/")
+        
         whatsapp_lines = [
             "🏡 *164 Brothers House Chore Roster* 🏡",
             "",
@@ -251,31 +261,21 @@ else:
             ""
         ]
         for chore, assignees in st.session_state.roster.items():
-            whatsapp_lines.append(f"• *{chore}*: {', '.join(assignees)}")
+            line = f"• *{chore}*: {', '.join(assignees)}"
+            # Append a short direct link to the chore guide for each assignment
+            if app_url_configured:
+                encoded_chore = urllib.parse.quote(chore)
+                chore_guide_url = f"{base_url}/chore_guide?chore={encoded_chore}"
+                line += f"\n  📖 Guide: {chore_guide_url}"
+            whatsapp_lines.append(line)
         if st.session_state.off_duty:
             whatsapp_lines.append("")
             whatsapp_lines.append(f"💤 *Resting:* {', '.join(st.session_state.off_duty)}")
             
-        # Add Guide redirect link if app_url is configured
-        if st.session_state.get("app_url"):
-            base_url = st.session_state.app_url.rstrip("/")
-            # If they entered the full subpage path, strip it out to point to the main page
-            if base_url.lower().endswith("/chore_guide"):
-                base_url = base_url[:-12].rstrip("/")
-            
-            # Encode the active roster state to include it in the URL
-            try:
-                encoded_roster = encode_roster(
-                    st.session_state.roster,
-                    st.session_state.off_duty,
-                    st.session_state.get("selected_verse")
-                )
-                share_url = f"{base_url}?r={encoded_roster}"
-            except Exception:
-                share_url = base_url
-
+        # Add a general guide link if app_url is configured
+        if app_url_configured:
             whatsapp_lines.append("")
-            whatsapp_lines.append(f"📖 *View Detailed Guide:* {share_url}")
+            whatsapp_lines.append(f"📖 *View Full Guide:* {base_url}/chore_guide")
             
         # Completion checkmark instructions
         whatsapp_lines.append("")

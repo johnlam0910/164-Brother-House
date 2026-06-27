@@ -456,6 +456,15 @@ st.markdown("""
         border-color: #7f8c8d;
     }
     
+    /* Image reference card hover animation (Visual Guide OneDrive cards) */
+    a[href*="sharepoint.com"] > div {
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    a[href*="sharepoint.com"] > div:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(46, 90, 68, 0.15) !important;
+    }
+    
     /* Styling primary Streamlit buttons for organic green color scheme */
     div.stButton > button[kind="primary"] {
         background-color: #2e5a44 !important;

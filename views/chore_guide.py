@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import json
 import time
+import re
 
 def reorder_files(file_paths, chore_filename):
     import shutil
@@ -27,6 +28,27 @@ def reorder_files(file_paths, chore_filename):
             os.rename(temp_path, new_name)
         except:
             pass
+
+# --- Helpers for extracting OneDrive image URLs from step text ---
+# Pattern matches: ([📷 Image Guide](URL)) or ([📷 Guide](URL)) etc.
+IMAGE_LINK_PATTERN = re.compile(
+    r'\(\[📷[^\]]*\]\((https?://[^\)]+)\)\)'
+)
+
+def extract_image_urls(step_text):
+    """Extract all OneDrive image URLs from a step's markdown text."""
+    return IMAGE_LINK_PATTERN.findall(step_text)
+
+def clean_step_text(step_text):
+    """Remove inline image link markdown from step text for cleaner checklist display."""
+    # Remove the full ([📷 ...](URL)) patterns
+    cleaned = IMAGE_LINK_PATTERN.sub('', step_text)
+    # Clean up leftover whitespace/punctuation artifacts
+    cleaned = re.sub(r'\s{2,}', ' ', cleaned)    # collapse multiple spaces
+    cleaned = re.sub(r'\s+,', ',', cleaned)        # fix " ," → ","
+    cleaned = re.sub(r'\s+\.', '.', cleaned)       # fix " ." → "."
+    cleaned = re.sub(r',\s*\.', '.', cleaned)      # fix ",." → "."
+    return cleaned.strip()
 
 # Page Header
 st.markdown("""
@@ -96,6 +118,13 @@ st.markdown(f"🛠️ **Tools & Supplies Required:** {', '.join(details['tools']
 st.markdown("---")
 
 # Main Content Layout: Instructions (Left) vs Photo/Image (Right)
+# Pre-extract all OneDrive image URLs from step text for the Visual Guide panel
+step_image_map = {}  # {step_num: [(label, url), ...]}
+for step_num, step in enumerate(details["steps"]):
+    urls = extract_image_urls(step)
+    if urls:
+        step_image_map[step_num] = urls
+
 content_col1, content_col2 = st.columns([3, 2])
 
 with content_col1:
@@ -113,7 +142,12 @@ with content_col1:
         checkbox_key = f"step_{selected_chore}_{step_num}"
         if checkbox_key not in st.session_state:
             st.session_state[checkbox_key] = False
-        st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
+        # Clean inline image links from step text for a cleaner checklist
+        display_text = clean_step_text(step)
+        # Add a camera icon hint if this step has linked images (viewable in Visual Guide)
+        if step_num in step_image_map:
+            display_text += f"  *(📷 see Visual Guide — Step {step_num + 1})*"
+        st.checkbox(f"**Step {step_num + 1}:** {display_text}", key=checkbox_key)
 
 with content_col2:
     st.markdown("### 📷 Visual Guide")
@@ -136,6 +170,7 @@ with content_col2:
     # Sort images to keep them ordered (e.g., staircase_1 before staircase_2)
     found_images.sort()
     
+    # --- Section A: Display locally cached photos (from assets/ folder) ---
     if len(found_images) == 1:
         # Display single image directly
         st.image(found_images[0], caption=f"Visual guide for {selected_chore}", use_container_width=True)
@@ -145,8 +180,163 @@ with content_col2:
         for i, img_path in enumerate(found_images):
             with tabs[i]:
                 st.image(img_path, caption=f"Photo {i+1} of {len(found_images)}: {selected_chore}", use_container_width=True)
-    else:
-        # Fallback if no images found
+    
+    # --- Section B: Display OneDrive image reference cards extracted from step text ---
+    if step_image_map:
+        if found_images:
+            st.markdown("---")
+        st.markdown("#### 🔗 Step-by-Step Image References")
+        st.caption("Tap any card below to view the image guide for that step:")
+        
+        for step_num, urls in step_image_map.items():
+            # Get the cleaned step text as a short label
+            raw_step = details["steps"][step_num]
+            step_label = clean_step_text(raw_step)
+            # Truncate long labels for the card
+            if len(step_label) > 80:
+                step_label = step_label[:77] + "..."
+            
+            for img_idx, url in enumerate(urls):
+                img_label = f"Image {img_idx + 1}" if len(urls) > 1 else "Image"
+                card_html = f"""
+                <a href="{url}" target="_blank" style="text-decoration: none;">
+                    <div style="
+                        background: linear-gradient(135deg, #f8f9fa, #e8f0fe);
+                        border: 1px solid #d0d7de;
+                        border-left: 4px solid #2e5a44;
+                        border-radius: 8px;
+                        padding: 12px 14px;
+                        margin-bottom: 8px;
+                        cursor: pointer;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.5rem;">📷</span>
+                            <div>
+                                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #2e5a44; font-weight: 700;">
+                                    Step {step_num + 1} · {img_label}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #444; margin-top: 2px; line-height: 1.3;">
+                                    {step_label}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #2e5a44; font-weight: 600; margin-top: 6px; text-align: right;">
+                            Tap to view →
+                        </div>
+                    </div>
+                </a>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+        
+        # --- Section C: Download all OneDrive images to assets for native display ---
+        st.markdown("---")
+        st.caption("💡 **Tip:** Download all reference images to display them natively without needing to open OneDrive links.")
+        
+        dl_key = f"download_images_{chore_filename}"
+        if st.button("⬇️ Download All Images to Local", key=dl_key, use_container_width=True):
+            import urllib.request
+            import hashlib
+            
+            # Collect all unique URLs from step_image_map
+            all_urls = []
+            for step_num, urls in step_image_map.items():
+                for url in urls:
+                    if url not in all_urls:
+                        all_urls.append(url)
+            
+            if not os.path.exists("assets"):
+                os.makedirs("assets")
+            
+            # Get hashes of already-existing images to prevent duplicates
+            existing_hashes = set()
+            for img_path in found_images:
+                try:
+                    with open(img_path, "rb") as f:
+                        existing_hashes.add(hashlib.md5(f.read()).hexdigest())
+                except:
+                    pass
+            
+            dl_results = []
+            downloaded = 0
+            skipped = 0
+            failed = 0
+            
+            progress_bar = st.progress(0, text="Starting download...")
+            
+            for idx, url in enumerate(all_urls):
+                progress_bar.progress(
+                    (idx + 1) / len(all_urls), 
+                    text=f"Downloading image {idx + 1} of {len(all_urls)}..."
+                )
+                try:
+                    # Convert OneDrive sharing URL to a direct download URL
+                    download_url = url
+                    if "sharepoint.com" in url:
+                        # Add download=1 to force download
+                        separator = "&" if "?" in url else "?"
+                        download_url = url + separator + "download=1"
+                    
+                    # Download the image
+                    req = urllib.request.Request(download_url, headers={
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    })
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        img_data = response.read()
+                        
+                        # Check for duplicate
+                        file_hash = hashlib.md5(img_data).hexdigest()
+                        if file_hash in existing_hashes:
+                            skipped += 1
+                            continue
+                        
+                        # Determine file extension from content type
+                        content_type = response.headers.get('Content-Type', '')
+                        if 'png' in content_type:
+                            ext = '.png'
+                        elif 'webp' in content_type:
+                            ext = '.webp'
+                        else:
+                            ext = '.jpg'
+                        
+                        timestamp = int(time.time())
+                        new_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
+                        save_path = os.path.join("assets", new_filename)
+                        
+                        with open(save_path, "wb") as f:
+                            f.write(img_data)
+                        
+                        existing_hashes.add(file_hash)
+                        downloaded += 1
+                        
+                except Exception as e:
+                    failed += 1
+                    dl_results.append(f"❌ Failed: {str(e)[:60]}")
+            
+            progress_bar.empty()
+            
+            if downloaded > 0:
+                st.session_state.save_success_msg = f"✅ Downloaded {downloaded} image(s) to assets!"
+                if skipped > 0:
+                    st.session_state.save_success_msg += f" ({skipped} duplicates skipped)"
+                if failed > 0:
+                    st.session_state.save_success_msg += f" ({failed} failed — OneDrive auth may be required)"
+                st.session_state.keep_editor_open = False
+                st.rerun()
+            elif skipped > 0 and failed == 0:
+                st.info(f"All {skipped} image(s) are already saved locally!")
+            elif failed > 0:
+                st.warning(
+                    f"⚠️ Could not download {failed} image(s). "
+                    f"OneDrive institutional links may require login. "
+                    f"You can manually save the images from the cards above, "
+                    f"then upload them using the '✏️ Edit Chore Details & Photos' section below."
+                )
+            else:
+                st.info("No OneDrive images found to download.")
+                
+    elif not found_images:
+        # Fallback if no local images AND no OneDrive references
         st.markdown(f"""
         <div class="fallback-image-box">
             <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📷</span>
@@ -156,6 +346,7 @@ with content_col2:
             </p>
         </div>
         """, unsafe_allow_html=True)
+
         
 st.markdown("---")
 
