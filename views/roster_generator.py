@@ -323,11 +323,6 @@ else:
         ]
         for chore, assignees in st.session_state.roster.items():
             line = f"• *{chore}*: {', '.join(assignees)}"
-            # Append a short direct link to the chore guide for each assignment
-            if app_url_configured:
-                encoded_chore = urllib.parse.quote(chore)
-                chore_guide_url = f"{base_url}/chore_guide?chore={encoded_chore}"
-                line += f"\n  📖 Guide: {chore_guide_url}"
             whatsapp_lines.append(line)
         if st.session_state.off_duty:
             whatsapp_lines.append("")
