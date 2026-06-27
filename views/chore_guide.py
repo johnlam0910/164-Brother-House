@@ -93,6 +93,11 @@ if not st.session_state.get("admin_authenticated", False):
     correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
     if passcode_input == correct_passcode:
         st.session_state.admin_authenticated = True
+        try:
+            import extra_streamlit_components as stx
+            stx.CookieManager().set('admin_authenticated', 'true', key='set_auth_cookie_view')
+        except:
+            pass
         st.success("🔓 Access Granted!")
         st.rerun()
     elif passcode_input:
@@ -203,6 +208,11 @@ with st.expander("✏️ Edit Chore Details", expanded=keep_open):
         correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
         if passcode_input == correct_passcode:
             st.session_state.admin_authenticated = True
+            try:
+                import extra_streamlit_components as stx
+                stx.CookieManager().set('admin_authenticated', 'true', key='set_auth_cookie_chore')
+            except:
+                pass
             st.success("🔓 Access Granted!")
             st.rerun()
         elif passcode_input:
