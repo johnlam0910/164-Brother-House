@@ -1,5 +1,6 @@
 import json
 import base64
+import streamlit as st
 
 def encode_roster(roster, off_duty, verse):
     """
@@ -29,3 +30,51 @@ def decode_roster(encoded_str):
     except Exception as e:
         # Gracefully handle corrupted or outdated query parameters
         return None, None, None
+
+@st.cache_resource
+def get_supabase_client():
+    """
+    Initializes and returns the Supabase client if secrets are configured.
+    Returns None otherwise.
+    Uses st.cache_resource to cache the connection client resource.
+    """
+    try:
+        url = st.secrets.get("SUPABASE_URL")
+        key = st.secrets.get("SUPABASE_KEY")
+        if url and key:
+            from supabase import create_client
+            return create_client(url, key)
+    except Exception as e:
+        pass
+    return None
+
+def db_get(key, default=None):
+    """
+    Fetches a JSON config value from the Supabase house_state table.
+    Returns default if not found or if database is not connected.
+    """
+    client = get_supabase_client()
+    if not client:
+        return default
+    try:
+        res = client.table("house_state").select("value").eq("key", key).execute()
+        if res.data:
+            return res.data[0]["value"]
+    except Exception as e:
+        pass
+    return default
+
+def db_set(key, value):
+    """
+    Saves/Upserts a JSON value to the Supabase house_state table.
+    Returns True on success, False if database is not connected or error occurs.
+    """
+    client = get_supabase_client()
+    if not client:
+        return False
+    try:
+        client.table("house_state").upsert({"key": key, "value": value}).execute()
+        return True
+    except Exception as e:
+        pass
+    return False

@@ -3,6 +3,7 @@ import random
 import pandas as pd
 import os
 import json
+from utils import get_supabase_client, db_set
 import urllib.parse
 
 
@@ -153,6 +154,17 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
                 except:
                     pass
             
+            # Save to Supabase if connected
+            if get_supabase_client() is not None:
+                db_set("brothers_list", new_brothers)
+                db_set("chores_list", new_chores)
+                db_set("config", {"app_url": st.session_state.app_url})
+                if 'roster' in st.session_state and st.session_state.roster:
+                    db_set("roster", {
+                        "roster": st.session_state.roster,
+                        "off_duty": st.session_state.off_duty
+                    })
+
             # Save to text files for persistence
             with open("brothers.txt", "w", encoding="utf-8") as f:
                 f.write("\n".join(new_brothers))
@@ -224,11 +236,13 @@ if generate_btn:
         st.session_state.roster = new_roster
         st.session_state.off_duty = off_duty
         
-        # Save roster to JSON file for persistence
+        # Save roster to JSON file and Supabase for persistence
         roster_data = {
             "roster": new_roster,
             "off_duty": off_duty
         }
+        if get_supabase_client() is not None:
+            db_set("roster", roster_data)
         with open("roster.json", "w", encoding="utf-8") as f:
             json.dump(roster_data, f, ensure_ascii=False, indent=2)
     
@@ -355,6 +369,10 @@ else:
             st.session_state.roster = {}
             st.session_state.off_duty = []
             
+            # Reset database roster if connected
+            if get_supabase_client() is not None:
+                db_set("roster", {"roster": {}, "off_duty": []})
+                
             # Remove roster file if it exists
             if os.path.exists("roster.json"):
                 try:

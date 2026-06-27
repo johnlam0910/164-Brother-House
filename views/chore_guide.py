@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import json
+from utils import get_supabase_client, db_set
 import time
 import re
 
@@ -193,17 +194,26 @@ with col_checklist:
 with col_images:
     has_any_images = False
     
-    # 1. Show locally uploaded photos (if any)
-    if found_images:
-        st.markdown("##### 🖼️ Uploaded Photos")
+    # 1. Show cloud-uploaded photos (from database details)
+    cloud_photos = details.get("uploaded_photos", [])
+    if cloud_photos:
+        st.markdown("##### ☁️ Cloud Uploaded Photos")
         has_any_images = True
-        for i, img_path in enumerate(found_images):
-            st.image(img_path, caption=f"Uploaded Photo {i+1} of {len(found_images)}", use_container_width=True)
+        for idx, img_url in enumerate(cloud_photos):
+            st.image(img_url, caption=f"Cloud Photo {idx + 1} of {len(cloud_photos)}", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
             
-    # 2. Show SharePoint Step-by-Step Image Guides directly
+    # 2. Show locally uploaded photos (if any)
+    if found_images:
+        st.markdown("##### 🖼️ Local Uploaded Photos")
+        has_any_images = True
+        for i, img_path in enumerate(found_images):
+            st.image(img_path, caption=f"Local Photo {i+1} of {len(found_images)}", use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+    # 3. Show SharePoint Step-by-Step Image Guides directly
     if step_image_map:
-        if found_images:
+        if found_images or cloud_photos:
             st.markdown("---")
         st.markdown("##### 🔗 Step-by-Step Image Guides")
         has_any_images = True
@@ -283,8 +293,44 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
     
     # 3. Existing Photos Management
     st.markdown("#### 📷 Manage & Reorder Photos")
+    
+    # Manage cloud photos
+    cloud_photos = details.get("uploaded_photos", [])
+    if cloud_photos:
+        st.caption("Manage cloud guide photos (🗑️ to delete):")
+        for idx, img_url in enumerate(cloud_photos):
+            col_img, col_del = st.columns([6, 1])
+            with col_img:
+                st.caption(f"Cloud Photo {idx+1}: {img_url.split('/')[-1]}")
+            with col_del:
+                if st.button("🗑️", key=f"del_cloud_{idx}", help="Delete cloud photo"):
+                    # Remove from list
+                    updated_photos = cloud_photos.copy()
+                    deleted_url = updated_photos.pop(idx)
+                    st.session_state.chore_details[selected_chore]["uploaded_photos"] = updated_photos
+                    
+                    # Try to delete from Supabase storage bucket
+                    try:
+                        filename_to_delete = deleted_url.split("/")[-1]
+                        supabase_client = get_supabase_client()
+                        if supabase_client:
+                            supabase_client.storage.from_("chore-guides").remove([filename_to_delete])
+                    except:
+                        pass
+                        
+                    # Save to database and local file
+                    if get_supabase_client() is not None:
+                        db_set("chore_details", st.session_state.chore_details)
+                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                        
+                    st.session_state.save_success_msg = "🗑️ Deleted cloud photo!"
+                    st.session_state.keep_editor_open = True
+                    st.rerun()
+
+    # Manage local photos
     if found_images:
-        st.caption("Use 🔼 and 🔽 to reorder, or 🗑️ to delete guide photos:")
+        st.caption("Manage local guide photos (🔼/🔽 to reorder, 🗑️ to delete):")
         for i, img_path in enumerate(found_images):
             img_filename = os.path.basename(img_path)
             col_img, col_up, col_down, col_del = st.columns([4, 1.2, 1.2, 1.2])
@@ -325,7 +371,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
                         st.rerun()
                     except Exception as e:
                         st.error(f"Failed to delete {img_filename}: {e}")
-    else:
+    
+    if not found_images and not cloud_photos:
         st.info("No photos uploaded for this chore yet.")
         
     # 4. Upload New Photos
@@ -344,12 +391,91 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
         
         # Save instructions to JSON file (preserving onedrive_url if it existed)
         old_details = st.session_state.chore_details.get(selected_chore, {})
+        
+        supabase_client = get_supabase_client()
+        uploaded_photo_urls = []
+        messages = []
+        
+        # Process and save uploaded files with duplicate checks (MD5 hashes)
+        if uploaded_files:
+            import hashlib
+            
+            # 1. Cloud Upload Mode
+            if supabase_client is not None:
+                for idx, uploaded_file in enumerate(uploaded_files):
+                    file_bytes = uploaded_file.getvalue()
+                    ext = os.path.splitext(uploaded_file.name)[1].lower()
+                    timestamp = int(time.time())
+                    mime_type = "image/jpeg"
+                    if ext == ".png":
+                        mime_type = "image/png"
+                    elif ext == ".webp":
+                        mime_type = "image/webp"
+                    
+                    cloud_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
+                    try:
+                        # Upload to 'chore-guides' bucket
+                        res = supabase_client.storage.from_("chore-guides").upload(
+                            path=cloud_filename,
+                            file=file_bytes,
+                            file_options={"content-type": mime_type}
+                        )
+                        public_url = supabase_client.storage.from_("chore-guides").get_public_url(cloud_filename)
+                        uploaded_photo_urls.append(public_url)
+                        messages.append(f"✅ Uploaded '{uploaded_file.name}' to cloud storage!")
+                    except Exception as e:
+                        messages.append(f"❌ Cloud upload failed for '{uploaded_file.name}': {e}")
+                        
+            # 2. Local Fallback/Write Mode
+            else:
+                if not os.path.exists("assets"):
+                    os.makedirs("assets")
+                
+                existing_hashes = set()
+                for img_path in found_images:
+                    try:
+                        with open(img_path, "rb") as f:
+                            existing_hashes.add(hashlib.md5(f.read()).hexdigest())
+                    except:
+                        pass
+                
+                batch_hashes = set()
+                for idx, uploaded_file in enumerate(uploaded_files):
+                    file_bytes = uploaded_file.getvalue()
+                    file_hash = hashlib.md5(file_bytes).hexdigest()
+                    
+                    if file_hash in existing_hashes or file_hash in batch_hashes:
+                        messages.append(f"⚠️ Skipped duplicate: '{uploaded_file.name}'")
+                        continue
+                    
+                    batch_hashes.add(file_hash)
+                    ext = os.path.splitext(uploaded_file.name)[1].lower()
+                    timestamp = int(time.time())
+                    new_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
+                    save_path = os.path.join("assets", new_filename)
+                    
+                    try:
+                        with open(save_path, "wb") as f:
+                            f.write(file_bytes)
+                        messages.append(f"✅ Saved {new_filename} to local assets!")
+                    except Exception as e:
+                        messages.append(f"❌ Local save failed for {new_filename}: {e}")
+        
+        # Extend current list of uploaded photos with the new ones
+        current_uploaded_photos = old_details.get("uploaded_photos", [])
+        current_uploaded_photos.extend(uploaded_photo_urls)
+        
         st.session_state.chore_details[selected_chore] = {
             "tools": tools_list,
             "steps": steps_list,
-            "onedrive_url": old_details.get("onedrive_url", "")
+            "onedrive_url": old_details.get("onedrive_url", ""),
+            "uploaded_photos": current_uploaded_photos
         }
         
+        # Save to database and local file
+        if supabase_client is not None:
+            db_set("chore_details", st.session_state.chore_details)
+            
         try:
             with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
                 json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
@@ -358,56 +484,11 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
         except Exception as e:
             st.error(f"Failed to save instructions: {e}")
             
-        # Process and save uploaded files with duplicate checks (MD5 hashes)
-        if uploaded_files:
-            import hashlib
-            
-            # Create assets directory if it doesn't exist
-            if not os.path.exists("assets"):
-                os.makedirs("assets")
-            
-            # Retrieve MD5 hashes of already uploaded files for this chore
-            existing_hashes = set()
-            for img_path in found_images:
-                try:
-                    with open(img_path, "rb") as f:
-                        existing_hashes.add(hashlib.md5(f.read()).hexdigest())
-                except:
-                    pass
-            
-            batch_hashes = set()
-            messages = []
-            
-            for idx, uploaded_file in enumerate(uploaded_files):
-                file_bytes = uploaded_file.getvalue()
-                file_hash = hashlib.md5(file_bytes).hexdigest()
-                
-                if file_hash in existing_hashes:
-                    messages.append(f"⚠️ Skipped duplicate: '{uploaded_file.name}' has already been uploaded for this chore.")
-                    continue
-                if file_hash in batch_hashes:
-                    messages.append(f"⚠️ Skipped batch duplicate: '{uploaded_file.name}' was uploaded multiple times in this batch.")
-                    continue
-                
-                batch_hashes.add(file_hash)
-                ext = os.path.splitext(uploaded_file.name)[1].lower()
-                timestamp = int(time.time())
-                new_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
-                save_path = os.path.join("assets", new_filename)
-                
-                try:
-                    with open(save_path, "wb") as f:
-                        f.write(file_bytes)
-                    messages.append(f"✅ Saved {new_filename} to assets!")
-                    existing_hashes.add(file_hash)
-                except Exception as e:
-                    messages.append(f"❌ Failed to save {new_filename}: {e}")
-            
-            # Store upload outcomes in session state to display after rerun
+        if messages:
             st.session_state.upload_results = messages
             st.session_state[uploader_ver_key] += 1
             st.session_state.keep_editor_open = True
-                    
+            
         st.rerun()
 
     # 6. Default Baseline Manager

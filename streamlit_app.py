@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import json
-from utils import decode_roster
+from utils import decode_roster, get_supabase_client, db_get, db_set
 
 # 1. Set global page configuration (mandatory call as the first Streamlit command)
 st.set_page_config(page_title="House Chores System", page_icon="🏠", layout="wide")
@@ -25,13 +25,16 @@ if shared_roster_param:
         if shared_verse is not None:
             st.session_state.selected_verse = shared_verse
         
-        # Save to roster.json for persistence
+        # Save to roster.json and Supabase for persistence
         try:
+            roster_data = {
+                "roster": st.session_state.roster,
+                "off_duty": st.session_state.off_duty
+            }
+            if get_supabase_client() is not None:
+                db_set("roster", roster_data)
             with open(ROSTER_FILE, "w", encoding="utf-8") as f:
-                json.dump({
-                    "roster": st.session_state.roster,
-                    "off_duty": st.session_state.off_duty
-                }, f, ensure_ascii=False, indent=2)
+                json.dump(roster_data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             pass
             
@@ -174,8 +177,14 @@ DEFAULT_INSTRUCTIONS = {
 
 INSTRUCTIONS_FILE = "instructions.json"
 
+# Check if Supabase is connected
+supabase_active = get_supabase_client() is not None
+
 if 'brothers_list' not in st.session_state:
-    if os.path.exists(BROTHERS_FILE):
+    db_brothers = db_get("brothers_list") if supabase_active else None
+    if db_brothers is not None:
+        st.session_state.brothers_list = db_brothers
+    elif os.path.exists(BROTHERS_FILE):
         with open(BROTHERS_FILE, "r", encoding="utf-8") as f:
             st.session_state.brothers_list = [line.strip() for line in f if line.strip()]
     else:
@@ -184,7 +193,10 @@ if 'brothers_list' not in st.session_state:
             f.write("\n".join(DEFAULT_BROTHERS))
 
 if 'chores_list' not in st.session_state:
-    if os.path.exists(CHORES_FILE):
+    db_chores = db_get("chores_list") if supabase_active else None
+    if db_chores is not None:
+        st.session_state.chores_list = db_chores
+    elif os.path.exists(CHORES_FILE):
         with open(CHORES_FILE, "r", encoding="utf-8") as f:
             st.session_state.chores_list = [line.strip() for line in f if line.strip()]
     else:
@@ -193,7 +205,11 @@ if 'chores_list' not in st.session_state:
             f.write("\n".join(DEFAULT_CHORES))
 
 if 'roster' not in st.session_state:
-    if os.path.exists(ROSTER_FILE):
+    db_roster = db_get("roster") if supabase_active else None
+    if db_roster is not None:
+        st.session_state.roster = db_roster.get("roster", {})
+        st.session_state.off_duty = db_roster.get("off_duty", [])
+    elif os.path.exists(ROSTER_FILE):
         try:
             with open(ROSTER_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -208,7 +224,10 @@ if 'roster' not in st.session_state:
 
 # Load or generate instructions.json
 if 'chore_details' not in st.session_state:
-    if os.path.exists(INSTRUCTIONS_FILE) and os.path.getsize(INSTRUCTIONS_FILE) > 0:
+    db_details = db_get("chore_details") if supabase_active else None
+    if db_details is not None:
+        st.session_state.chore_details = db_details
+    elif os.path.exists(INSTRUCTIONS_FILE) and os.path.getsize(INSTRUCTIONS_FILE) > 0:
         try:
             with open(INSTRUCTIONS_FILE, "r", encoding="utf-8") as f:
                 st.session_state.chore_details = json.load(f)
@@ -231,7 +250,10 @@ if not os.path.exists(INSTRUCTIONS_DEFAULT_FILE) or os.path.getsize(INSTRUCTIONS
 # Load app_url configuration
 CONFIG_FILE = "config.json"
 if 'app_url' not in st.session_state:
-    if os.path.exists(CONFIG_FILE):
+    db_config = db_get("config") if supabase_active else None
+    if db_config is not None:
+        st.session_state.app_url = db_config.get("app_url", "")
+    elif os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 config = json.load(f)
@@ -597,6 +619,22 @@ Welcome to the 164 Brothers House! This is a place where brothers live together 
 歡迎來到 164 弟兄之家！這是一個共同生活、接待福音朋友和聖徒的地方。讓我們一起保持家中的整潔與溫馨。
 """)
 st.sidebar.markdown("---")
+
+# Show database connection status
+if supabase_active:
+    st.sidebar.markdown(
+        "<div style='font-size: 0.85rem; color: #1557b0; background-color: #e8f0fe; border: 1px solid #c2e7ff; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; text-align: center;'>"
+        "🟢 Cloud Database Connected"
+        "</div>", 
+        unsafe_allow_html=True
+    )
+else:
+    st.sidebar.markdown(
+        "<div style='font-size: 0.85rem; color: #b06000; background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; text-align: center;'>"
+        "🟡 Local Files Mode (Offline)"
+        "</div>", 
+        unsafe_allow_html=True
+    )
 
 # Counts for validation checks
 n_brothers = len(st.session_state.brothers_list)
