@@ -91,7 +91,15 @@ st.markdown("---")
 # Expandable section for editing list of brothers and chores
 with st.expander("🛠️ Edit Names & Tasks", expanded=False):
     if not st.session_state.get("admin_authenticated", False):
-        st.warning("🔒 Editing is locked. Please enter the Admin Passcode in the sidebar to unlock.")
+        st.warning("🔒 Editing is locked. Enter the Admin Passcode to unlock:")
+        passcode_input = st.text_input("Admin Passcode:", type="password", key="unlock_roster_editor")
+        correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
+        if passcode_input == correct_passcode:
+            st.session_state.admin_authenticated = True
+            st.success("🔓 Access Granted!")
+            st.rerun()
+        elif passcode_input:
+            st.error("❌ Incorrect Passcode")
     else:
         st.markdown("Modify the lists below to add, remove, or change the house members and chores.")
         

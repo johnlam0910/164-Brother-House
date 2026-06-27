@@ -177,7 +177,15 @@ st.session_state.keep_editor_open = False
 # Edit Chore Details Expander
 with st.expander("✏️ Edit Chore Details", expanded=keep_open):
     if not st.session_state.get("admin_authenticated", False):
-        st.warning("🔒 Editing is locked. Please enter the Admin Passcode in the sidebar to unlock.")
+        st.warning("🔒 Editing is locked. Enter the Admin Passcode to unlock:")
+        passcode_input = st.text_input("Admin Passcode:", type="password", key="unlock_chore_editor")
+        correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
+        if passcode_input == correct_passcode:
+            st.session_state.admin_authenticated = True
+            st.success("🔓 Access Granted!")
+            st.rerun()
+        elif passcode_input:
+            st.error("❌ Incorrect Passcode")
     else:
         st.markdown(f"### Update Guide for **{selected_chore}**")
         
