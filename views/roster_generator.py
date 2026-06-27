@@ -322,7 +322,7 @@ else:
         # Add a general guide link if app_url is configured
         if app_url_configured:
             whatsapp_lines.append("")
-            whatsapp_lines.append(f"📖 *View Full Guide:* {base_url}/chore_guide")
+            whatsapp_lines.append(f"📖 *View Full Guide*: {base_url}/chore_guide")
             
         # Completion checkmark instructions
         whatsapp_lines.append("")
