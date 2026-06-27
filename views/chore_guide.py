@@ -178,46 +178,46 @@ with col_checklist:
         checkbox_key = f"step_{selected_chore}_{step_num}"
         if checkbox_key not in st.session_state:
             st.session_state[checkbox_key] = False
-        # Clean inline image links from step text for a clean checklist without OneDrive links
-        display_text = clean_step_text(step)
-        st.checkbox(f"**Step {step_num + 1}:** {display_text}", key=checkbox_key)
+        # Do not clean inline image links, display the raw step text with its OneDrive links
+        st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
 
 with col_images:
-    # Show cloud-uploaded photos (from database details)
-    cloud_photos = details.get("uploaded_photos", [])
-    if cloud_photos:
-        st.markdown("##### ☁️ Cloud Uploaded Photos")
-        for idx, img_url in enumerate(cloud_photos):
-            st.image(img_url, caption=f"Cloud Photo {idx + 1} of {len(cloud_photos)}", use_container_width=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-    else:
+    has_any_images = False
+    
+    # Show SharePoint Step-by-Step Image Guides directly
+    if step_image_map:
+        st.markdown("##### 🔗 Step-by-Step Image Guides")
+        has_any_images = True
+        for step_num, urls in step_image_map.items():
+            raw_step = details["steps"][step_num]
+            step_label = clean_step_text(raw_step)
+            
+            # Format step header nicely
+            st.markdown(f"**Step {step_num + 1}:** *{step_label}*")
+            for img_idx, url in enumerate(urls):
+                direct_url = make_direct_image_url(url)
+                img_label = f"Image {img_idx + 1}" if len(urls) > 1 else "Image Guide"
+                # Render direct image
+                st.image(direct_url, caption=f"Step {step_num + 1} — {img_label}", use_container_width=True)
+                # Render SharePoint fallback link
+                st.markdown(f"<p style='margin-top: -10px; margin-bottom: 15px;'><a href='{url}' target='_blank' style='color: #2e5a44; font-size: 0.85rem; text-decoration: none; font-weight: 600;'>🔗 Open in OneDrive</a></p>", unsafe_allow_html=True)
+                
+    if not has_any_images:
         # Fallback if no images at all
         st.markdown(f"""
         <div class="fallback-image-box">
             <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📷</span>
-            <span style="font-weight: 600; color: #7f8c8d; font-size: 1.1rem;">No cloud images uploaded yet</span>
+            <span style="font-weight: 600; color: #7f8c8d; font-size: 1.1rem;">No inline image guides found</span>
             <p style="font-size: 0.85rem; color: #95a5a6; margin-top: 5px; margin-bottom: 0;">
-                Photos for "{selected_chore}" can be uploaded in the edit section below.
+                Paste OneDrive/SharePoint image links in steps inside the edit pane (e.g. <code>[📷 Image Guide](url)</code>) to display them here.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
 st.markdown("---")
 
-# 4. Upload Key and Expander State determination
-base_chore = selected_chore.split("(")[0].strip()
-clean_base = "".join(c for c in base_chore if c.isalnum() or c.isspace() or c == "_")
-chore_key = clean_base.lower().strip().replace(" ", "_")
-uploader_ver_key = f"uploader_ver_{chore_key}"
-if uploader_ver_key not in st.session_state:
-    st.session_state[uploader_ver_key] = 0
-
-uploader_key = f"uploader_{chore_key}_{st.session_state[uploader_ver_key]}"
-
-# Keep expander open on rerun if there are pending files or if an action was performed
+# Keep expander open on rerun if an action was performed
 keep_open = False
-if uploader_key in st.session_state and st.session_state[uploader_key]:
-    keep_open = True
 if st.session_state.get("keep_editor_open", False):
     keep_open = True
 
@@ -250,150 +250,23 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
     current_steps_str = "\n".join(details.get("steps", []))
     edited_steps = st.text_area("Cleaning Steps (one step per line):", value=current_steps_str, height=200)
     
-    # 3. Existing Photos Management
-    st.markdown("#### 📷 Manage Cloud Photos")
-    
-    # Manage cloud photos
-    cloud_photos = details.get("uploaded_photos", [])
-    if cloud_photos:
-        st.caption("Manage cloud guide photos (🗑️ to delete):")
-        for idx, img_url in enumerate(cloud_photos):
-            col_img, col_del = st.columns([6, 1])
-            with col_img:
-                st.caption(f"Cloud Photo {idx+1}: {img_url.split('/')[-1]}")
-            with col_del:
-                if st.button("🗑️", key=f"del_cloud_{idx}", help="Delete cloud photo"):
-                    # Remove from list
-                    updated_photos = cloud_photos.copy()
-                    deleted_url = updated_photos.pop(idx)
-                    st.session_state.chore_details[selected_chore]["uploaded_photos"] = updated_photos
-                    
-                    # Try to delete from Supabase storage bucket
-                    try:
-                        filename_to_delete = deleted_url.split("/")[-1]
-                        supabase_client = get_supabase_client()
-                        if supabase_client:
-                            supabase_client.storage.from_("chore-guides").remove([filename_to_delete])
-                    except:
-                        pass
-                        
-                    # Save to database and local file
-                    if get_supabase_client() is not None:
-                        db_set("chore_details", st.session_state.chore_details)
-                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
-                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-                        
-                    st.session_state.save_success_msg = "🗑️ Deleted cloud photo!"
-                    st.session_state.keep_editor_open = True
-                    st.rerun()
-    else:
-        st.info("No cloud photos uploaded for this chore yet.")
-        
-    # 4. Upload New Photos
-    uploaded_files = st.file_uploader(
-        "Upload new photo(s) for this chore:", 
-        type=["png", "jpg", "jpeg", "webp"], 
-        accept_multiple_files=True,
-        key=uploader_key
-    )
-    
-    # 5. Save Button
+    # 3. Save Button
     if st.button("💾 Save Chore Details", type="primary", use_container_width=True):
         # Update details in dict
         tools_list = [t.strip() for t in edited_tools.split(",") if t.strip()]
         steps_list = [s.strip() for s in edited_steps.split("\n") if s.strip()]
         
-        # Save instructions to JSON file (preserving onedrive_url if it existed)
+        # Save instructions to JSON file (preserving onedrive_url and uploaded_photos if they existed)
         old_details = st.session_state.chore_details.get(selected_chore, {})
-        
-        supabase_client = get_supabase_client()
-        uploaded_photo_urls = []
-        messages = []
-        
-        # Process and save uploaded files with duplicate checks (MD5 hashes)
-        if uploaded_files:
-            import hashlib
-            
-            # 1. Cloud Upload Mode
-            if supabase_client is not None:
-                for idx, uploaded_file in enumerate(uploaded_files):
-                    file_bytes = uploaded_file.getvalue()
-                    ext = os.path.splitext(uploaded_file.name)[1].lower()
-                    timestamp = int(time.time())
-                    mime_type = "image/jpeg"
-                    if ext == ".png":
-                        mime_type = "image/png"
-                    elif ext == ".webp":
-                        mime_type = "image/webp"
-                    
-                    cloud_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
-                    try:
-                        # Upload to 'chore-guides' bucket
-                        res = supabase_client.storage.from_("chore-guides").upload(
-                            path=cloud_filename,
-                            file=file_bytes,
-                            file_options={"content-type": mime_type}
-                        )
-                        public_url = supabase_client.storage.from_("chore-guides").get_public_url(cloud_filename)
-                        uploaded_photo_urls.append(public_url)
-                        messages.append(f"✅ Uploaded '{uploaded_file.name}' to cloud storage!")
-                    except Exception as e:
-                        messages.append(f"❌ Cloud upload failed for '{uploaded_file.name}': {e}")
-                        
-            # 2. Local Fallback/Write Mode
-            else:
-                if not os.path.exists("assets"):
-                    os.makedirs("assets")
-                
-                valid_extensions = ('.jpg', '.jpeg', '.png', '.webp')
-                found_images = []
-                for file in os.listdir("assets"):
-                    name, ext = os.path.splitext(file)
-                    if is_chore_file(file, chore_filename) and ext.lower() in valid_extensions:
-                        found_images.append(os.path.join("assets", file))
-                
-                existing_hashes = set()
-                for img_path in found_images:
-                    try:
-                        with open(img_path, "rb") as f:
-                            existing_hashes.add(hashlib.md5(f.read()).hexdigest())
-                    except:
-                        pass
-                
-                batch_hashes = set()
-                for idx, uploaded_file in enumerate(uploaded_files):
-                    file_bytes = uploaded_file.getvalue()
-                    file_hash = hashlib.md5(file_bytes).hexdigest()
-                    
-                    if file_hash in existing_hashes or file_hash in batch_hashes:
-                        messages.append(f"⚠️ Skipped duplicate: '{uploaded_file.name}'")
-                        continue
-                    
-                    batch_hashes.add(file_hash)
-                    ext = os.path.splitext(uploaded_file.name)[1].lower()
-                    timestamp = int(time.time())
-                    new_filename = f"{chore_filename}_{timestamp}_{idx}{ext}"
-                    save_path = os.path.join("assets", new_filename)
-                    
-                    try:
-                        with open(save_path, "wb") as f:
-                            f.write(file_bytes)
-                        messages.append(f"✅ Saved {new_filename} to local assets!")
-                    except Exception as e:
-                        messages.append(f"❌ Local save failed for {new_filename}: {e}")
-        
-        # Extend current list of uploaded photos with the new ones
-        current_uploaded_photos = old_details.get("uploaded_photos", [])
-        current_uploaded_photos.extend(uploaded_photo_urls)
-        
         st.session_state.chore_details[selected_chore] = {
             "tools": tools_list,
             "steps": steps_list,
             "onedrive_url": old_details.get("onedrive_url", ""),
-            "uploaded_photos": current_uploaded_photos
+            "uploaded_photos": old_details.get("uploaded_photos", [])
         }
         
         # Save to database and local file
+        supabase_client = get_supabase_client()
         if supabase_client is not None:
             db_set("chore_details", st.session_state.chore_details)
             
@@ -404,11 +277,6 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
             st.session_state.keep_editor_open = True
         except Exception as e:
             st.error(f"Failed to save instructions: {e}")
-            
-        if messages:
-            st.session_state.upload_results = messages
-            st.session_state[uploader_ver_key] += 1
-            st.session_state.keep_editor_open = True
             
         st.rerun()
 
