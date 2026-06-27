@@ -156,19 +156,10 @@ for step_num, step in enumerate(details["steps"]):
     if urls:
         step_image_map[step_num] = urls
 
-# Compute chore filename for asset lookup (used later in editor section)
+# Compute chore filename for asset lookup (used in editor upload naming)
 base_chore = selected_chore.split("(")[0].strip()
 clean_base = "".join(c for c in base_chore if c.isalnum() or c.isspace() or c == "_")
 chore_filename = clean_base.lower().strip().replace(" ", "_")
-valid_extensions = ('.jpg', '.jpeg', '.png', '.webp')
-found_images = []
-
-if os.path.exists("assets"):
-    for file in os.listdir("assets"):
-        name, ext = os.path.splitext(file)
-        if is_chore_file(file, chore_filename) and ext.lower() in valid_extensions:
-            found_images.append(os.path.join("assets", file))
-found_images.sort()
 
 col_checklist, col_images = st.columns([3, 2])
 
@@ -187,56 +178,23 @@ with col_checklist:
         checkbox_key = f"step_{selected_chore}_{step_num}"
         if checkbox_key not in st.session_state:
             st.session_state[checkbox_key] = False
-        # Clean inline image links from step text for a cleaner checklist
-        display_text = clean_step_text(step)
-        st.checkbox(f"**Step {step_num + 1}:** {display_text}", key=checkbox_key)
+        # Do not clean inline image links, display the raw step text with its OneDrive links
+        st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
 
 with col_images:
-    has_any_images = False
-    
-    # 1. Show cloud-uploaded photos (from database details)
+    # Show cloud-uploaded photos (from database details)
     cloud_photos = details.get("uploaded_photos", [])
     if cloud_photos:
         st.markdown("##### ☁️ Cloud Uploaded Photos")
-        has_any_images = True
         for idx, img_url in enumerate(cloud_photos):
             st.image(img_url, caption=f"Cloud Photo {idx + 1} of {len(cloud_photos)}", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
-            
-    # 2. Show locally uploaded photos (if any)
-    if found_images:
-        st.markdown("##### 🖼️ Local Uploaded Photos")
-        has_any_images = True
-        for i, img_path in enumerate(found_images):
-            st.image(img_path, caption=f"Local Photo {i+1} of {len(found_images)}", use_container_width=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-    # 3. Show SharePoint Step-by-Step Image Guides directly
-    if step_image_map:
-        if found_images or cloud_photos:
-            st.markdown("---")
-        st.markdown("##### 🔗 Step-by-Step Image Guides")
-        has_any_images = True
-        for step_num, urls in step_image_map.items():
-            raw_step = details["steps"][step_num]
-            step_label = clean_step_text(raw_step)
-            
-            # Format step header nicely
-            st.markdown(f"**Step {step_num + 1}:** *{step_label}*")
-            for img_idx, url in enumerate(urls):
-                direct_url = make_direct_image_url(url)
-                img_label = f"Image {img_idx + 1}" if len(urls) > 1 else "Image Guide"
-                # Render direct image
-                st.image(direct_url, caption=f"Step {step_num + 1} — {img_label}", use_container_width=True)
-                # Render SharePoint fallback link
-                st.markdown(f"<p style='margin-top: -10px; margin-bottom: 15px;'><a href='{url}' target='_blank' style='color: #2e5a44; font-size: 0.85rem; text-decoration: none; font-weight: 600;'>🔗 Open in SharePoint</a></p>", unsafe_allow_html=True)
-                
-    if not has_any_images:
+    else:
         # Fallback if no images at all
         st.markdown(f"""
         <div class="fallback-image-box">
             <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📷</span>
-            <span style="font-weight: 600; color: #7f8c8d; font-size: 1.1rem;">No image guides available yet</span>
+            <span style="font-weight: 600; color: #7f8c8d; font-size: 1.1rem;">No cloud images uploaded yet</span>
             <p style="font-size: 0.85rem; color: #95a5a6; margin-top: 5px; margin-bottom: 0;">
                 Photos for "{selected_chore}" can be uploaded in the edit section below.
             </p>
@@ -292,7 +250,7 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
     edited_steps = st.text_area("Cleaning Steps (one step per line):", value=current_steps_str, height=200)
     
     # 3. Existing Photos Management
-    st.markdown("#### 📷 Manage & Reorder Photos")
+    st.markdown("#### 📷 Manage Cloud Photos")
     
     # Manage cloud photos
     cloud_photos = details.get("uploaded_photos", [])
@@ -327,53 +285,8 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
                     st.session_state.save_success_msg = "🗑️ Deleted cloud photo!"
                     st.session_state.keep_editor_open = True
                     st.rerun()
-
-    # Manage local photos
-    if found_images:
-        st.caption("Manage local guide photos (🔼/🔽 to reorder, 🗑️ to delete):")
-        for i, img_path in enumerate(found_images):
-            img_filename = os.path.basename(img_path)
-            col_img, col_up, col_down, col_del = st.columns([4, 1.2, 1.2, 1.2])
-            
-            with col_img:
-                st.caption(f"Photo {i+1}: {img_filename}")
-                
-            with col_up:
-                if i > 0:
-                    if st.button("🔼", key=f"up_{img_filename}", help="Move up"):
-                        new_order = found_images.copy()
-                        new_order[i], new_order[i-1] = new_order[i-1], new_order[i]
-                        reorder_files(new_order, chore_filename)
-                        st.session_state.save_success_msg = "✅ Photo order updated!"
-                        st.session_state.keep_editor_open = True
-                        st.rerun()
-                else:
-                    st.write("")
-                    
-            with col_down:
-                if i < len(found_images) - 1:
-                    if st.button("🔽", key=f"down_{img_filename}", help="Move down"):
-                        new_order = found_images.copy()
-                        new_order[i], new_order[i+1] = new_order[i+1], new_order[i]
-                        reorder_files(new_order, chore_filename)
-                        st.session_state.save_success_msg = "✅ Photo order updated!"
-                        st.session_state.keep_editor_open = True
-                        st.rerun()
-                else:
-                    st.write("")
-                    
-            with col_del:
-                if st.button("🗑️", key=f"del_{img_filename}", help="Delete photo"):
-                    try:
-                        os.remove(img_path)
-                        st.session_state.save_success_msg = f"🗑️ Deleted {img_filename}!"
-                        st.session_state.keep_editor_open = True
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Failed to delete {img_filename}: {e}")
-    
-    if not found_images and not cloud_photos:
-        st.info("No photos uploaded for this chore yet.")
+    else:
+        st.info("No cloud photos uploaded for this chore yet.")
         
     # 4. Upload New Photos
     uploaded_files = st.file_uploader(
@@ -430,6 +343,13 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
             else:
                 if not os.path.exists("assets"):
                     os.makedirs("assets")
+                
+                valid_extensions = ('.jpg', '.jpeg', '.png', '.webp')
+                found_images = []
+                for file in os.listdir("assets"):
+                    name, ext = os.path.splitext(file)
+                    if is_chore_file(file, chore_filename) and ext.lower() in valid_extensions:
+                        found_images.append(os.path.join("assets", file))
                 
                 existing_hashes = set()
                 for img_path in found_images:
