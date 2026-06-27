@@ -148,71 +148,22 @@ st.markdown(f"## {selected_chore}")
 st.markdown(f"🛠️ **Tools & Supplies Required:** {', '.join(details['tools'])}")
 st.markdown("---")
 
-# Main Content: Mobile-friendly tabbed layout (📝 Checklist | 📷 Image Guide)
-# Pre-extract all OneDrive image URLs from step text for the Image Guide tab
-step_image_map = {}  # {step_num: [url, ...]}
+col_title, col_btn = st.columns([5, 1])
+with col_title:
+    st.caption("Cross off the tasks below as you complete them:")
+with col_btn:
+    if st.button("🔄 Reset Checklist", key=f"reset_{selected_chore}", use_container_width=True):
+        for i in range(len(details["steps"])):
+            st.session_state[f"step_{selected_chore}_{i}"] = False
+        st.rerun()
+
+st.markdown("<br>", unsafe_allow_html=True)
 for step_num, step in enumerate(details["steps"]):
-    urls = extract_image_urls(step)
-    if urls:
-        step_image_map[step_num] = urls
-
-# Compute chore filename for asset lookup (used in editor upload naming)
-base_chore = selected_chore.split("(")[0].strip()
-clean_base = "".join(c for c in base_chore if c.isalnum() or c.isspace() or c == "_")
-chore_filename = clean_base.lower().strip().replace(" ", "_")
-
-col_checklist, col_images = st.columns([3, 2])
-
-with col_checklist:
-    col_title, col_btn = st.columns([3, 2])
-    with col_title:
-        st.caption("Cross off the tasks below as you complete them:")
-    with col_btn:
-        if st.button("🔄 Reset", key=f"reset_{selected_chore}", use_container_width=True):
-            for i in range(len(details["steps"])):
-                st.session_state[f"step_{selected_chore}_{i}"] = False
-            st.rerun()
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    for step_num, step in enumerate(details["steps"]):
-        checkbox_key = f"step_{selected_chore}_{step_num}"
-        if checkbox_key not in st.session_state:
-            st.session_state[checkbox_key] = False
-        # Do not clean inline image links, display the raw step text with its OneDrive links
-        st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
-
-with col_images:
-    has_any_images = False
-    
-    # Show SharePoint Step-by-Step Image Guides directly
-    if step_image_map:
-        st.markdown("##### 🔗 Step-by-Step Image Guides")
-        has_any_images = True
-        for step_num, urls in step_image_map.items():
-            raw_step = details["steps"][step_num]
-            step_label = clean_step_text(raw_step)
-            
-            # Format step header nicely
-            st.markdown(f"**Step {step_num + 1}:** *{step_label}*")
-            for img_idx, url in enumerate(urls):
-                direct_url = make_direct_image_url(url)
-                img_label = f"Image {img_idx + 1}" if len(urls) > 1 else "Image Guide"
-                # Render direct image
-                st.image(direct_url, caption=f"Step {step_num + 1} — {img_label}", use_container_width=True)
-                # Render SharePoint fallback link
-                st.markdown(f"<p style='margin-top: -10px; margin-bottom: 15px;'><a href='{url}' target='_blank' style='color: #2e5a44; font-size: 0.85rem; text-decoration: none; font-weight: 600;'>🔗 Open in OneDrive</a></p>", unsafe_allow_html=True)
-                
-    if not has_any_images:
-        # Fallback if no images at all
-        st.markdown(f"""
-        <div class="fallback-image-box">
-            <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📷</span>
-            <span style="font-weight: 600; color: #7f8c8d; font-size: 1.1rem;">No inline image guides found</span>
-            <p style="font-size: 0.85rem; color: #95a5a6; margin-top: 5px; margin-bottom: 0;">
-                Paste OneDrive/SharePoint image links in steps inside the edit pane (e.g. <code>[📷 Image Guide](url)</code>) to display them here.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    checkbox_key = f"step_{selected_chore}_{step_num}"
+    if checkbox_key not in st.session_state:
+        st.session_state[checkbox_key] = False
+    # Display the raw step text containing the OneDrive/SharePoint markdown link
+    st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
 
 st.markdown("---")
 
