@@ -658,6 +658,33 @@ else:
 
 st.sidebar.markdown("---")
 
+# Administrator Authentication Panel
+st.sidebar.markdown("<h4 style='color: #2e5a44; margin-bottom: 5px;'>🔑 Admin Control Panel</h4>", unsafe_allow_html=True)
+
+if 'admin_authenticated' not in st.session_state:
+    st.session_state.admin_authenticated = False
+
+if st.session_state.admin_authenticated:
+    st.sidebar.success("🔓 Admin Mode Active")
+    if st.sidebar.button("🔒 Log Out", use_container_width=True):
+        st.session_state.admin_authenticated = False
+        st.rerun()
+else:
+    admin_passcode_input = st.sidebar.text_input(
+        "Enter Admin Passcode:", 
+        type="password",
+        help="Enter passcode to unlock roster settings and instructions editing."
+    )
+    correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
+    if admin_passcode_input == correct_passcode:
+        st.session_state.admin_authenticated = True
+        st.sidebar.success("🔓 Access Granted!")
+        st.rerun()
+    elif admin_passcode_input:
+        st.sidebar.error("❌ Incorrect Passcode")
+
+st.sidebar.markdown("---")
+
 # Show success toast if shared roster was loaded
 if st.session_state.get("show_shared_roster_toast"):
     st.toast("📥 Loaded shared roster from link!", icon="✅")

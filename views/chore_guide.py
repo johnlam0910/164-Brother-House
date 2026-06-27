@@ -172,231 +172,234 @@ keep_open = False
 if st.session_state.get("keep_editor_open", False):
     keep_open = True
 
-# Reset keep_editor_open flag for next runs (so they can collapse it manually if they want)
 st.session_state.keep_editor_open = False
 
 # Edit Chore Details Expander
 with st.expander("✏️ Edit Chore Details", expanded=keep_open):
-    st.markdown(f"### Update Guide for **{selected_chore}**")
-    
-    # Display save or upload results from the previous rerun
-    if "save_success_msg" in st.session_state:
-        st.success(st.session_state.save_success_msg)
-        del st.session_state.save_success_msg
-    if "upload_results" in st.session_state:
-        for result in st.session_state.upload_results:
-            if "✅" in result:
-                st.success(result)
-            elif "⚠️" in result:
-                st.warning(result)
-            else:
-                st.error(result)
-        del st.session_state.upload_results
-
-    # 1. Edit Tools
-    current_tools_str = ", ".join(details.get("tools", []))
-    edited_tools = st.text_input("Required Tools & Supplies (comma-separated):", value=current_tools_str)
-    
-    # 2. Edit Steps
-    current_steps_str = "\n".join(details.get("steps", []))
-    edited_steps = st.text_area("Cleaning Steps (one step per line):", value=current_steps_str, height=200)
-    
-    # 3. Save Button
-    if st.button("💾 Save Chore Details", type="primary", use_container_width=True):
-        # Update details in dict
-        tools_list = [t.strip() for t in edited_tools.split(",") if t.strip()]
-        steps_list = [s.strip() for s in edited_steps.split("\n") if s.strip()]
+    if not st.session_state.get("admin_authenticated", False):
+        st.warning("🔒 Editing is locked. Please enter the Admin Passcode in the sidebar to unlock.")
+    else:
+        st.markdown(f"### Update Guide for **{selected_chore}**")
         
-        # Save instructions to JSON file (preserving onedrive_url and uploaded_photos if they existed)
-        old_details = st.session_state.chore_details.get(selected_chore, {})
-        st.session_state.chore_details[selected_chore] = {
-            "tools": tools_list,
-            "steps": steps_list,
-            "onedrive_url": old_details.get("onedrive_url", ""),
-            "uploaded_photos": old_details.get("uploaded_photos", [])
-        }
-        
-        # Save to database and local file
-        supabase_client = get_supabase_client()
-        if supabase_client is not None:
-            db_set("chore_details", st.session_state.chore_details)
-            
-        try:
-            with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
-                json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-            st.session_state.save_success_msg = "💾 Chore details updated successfully!"
-            st.session_state.keep_editor_open = True
-        except Exception as e:
-            st.error(f"Failed to save instructions: {e}")
-            
-        st.rerun()
+        # Display save or upload results from the previous rerun
+        if "save_success_msg" in st.session_state:
+            st.success(st.session_state.save_success_msg)
+            del st.session_state.save_success_msg
+        if "upload_results" in st.session_state:
+            for result in st.session_state.upload_results:
+                if "✅" in result:
+                    st.success(result)
+                elif "⚠️" in result:
+                    st.warning(result)
+                else:
+                    st.error(result)
+            del st.session_state.upload_results
 
-    # 6. Default Baseline Manager
-    st.markdown("---")
-    st.markdown("#### 💾 Default Baseline Manager")
-    st.caption("Save your custom guidelines and photos as the default baseline, or revert to it if you make mistakes.")
-    
-    col_set, col_rev = st.columns(2)
-    DEFAULT_JSON = "instructions_default.json"
-    
-    with col_set:
-        if st.button("💾 Set Current as Default", help="Save the current instructions and photos for this chore as the default baseline.", use_container_width=True):
-            import shutil
+        # 1. Edit Tools
+        current_tools_str = ", ".join(details.get("tools", []))
+        edited_tools = st.text_input("Required Tools & Supplies (comma-separated):", value=current_tools_str)
+        
+        # 2. Edit Steps
+        current_steps_str = "\n".join(details.get("steps", []))
+        edited_steps = st.text_area("Cleaning Steps (one step per line):", value=current_steps_str, height=200)
+        
+        # 3. Save Button
+        if st.button("💾 Save Chore Details", type="primary", use_container_width=True):
+            # Update details in dict
+            tools_list = [t.strip() for t in edited_tools.split(",") if t.strip()]
+            steps_list = [s.strip() for s in edited_steps.split("\n") if s.strip()]
             
-            # 1. Update instructions_default.json
-            default_details = {}
-            if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
-                try:
-                    with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
-                        default_details = json.load(f)
-                except:
-                    pass
+            # Save instructions to JSON file (preserving onedrive_url and uploaded_photos if they existed)
+            old_details = st.session_state.chore_details.get(selected_chore, {})
+            st.session_state.chore_details[selected_chore] = {
+                "tools": tools_list,
+                "steps": steps_list,
+                "onedrive_url": old_details.get("onedrive_url", ""),
+                "uploaded_photos": old_details.get("uploaded_photos", [])
+            }
             
-            default_details[selected_chore] = st.session_state.chore_details.get(selected_chore, {
-                "tools": [],
-                "steps": []
-            })
-            
+            # Save to database and local file
+            supabase_client = get_supabase_client()
+            if supabase_client is not None:
+                db_set("chore_details", st.session_state.chore_details)
+                
             try:
-                with open(DEFAULT_JSON, "w", encoding="utf-8") as f:
-                    json.dump(default_details, f, ensure_ascii=False, indent=2)
-                st.session_state.save_success_msg = "✅ Instructions set as default baseline!"
+                with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                    json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                st.session_state.save_success_msg = "💾 Chore details updated successfully!"
                 st.session_state.keep_editor_open = True
             except Exception as e:
-                st.error(f"❌ Failed to save default instructions: {e}")
+                st.error(f"Failed to save instructions: {e}")
                 
-            # 2. Copy current photos to assets_default/
-            if not os.path.exists("assets_default"):
-                os.makedirs("assets_default")
+            st.rerun()
+
+        # 6. Default Baseline Manager
+        st.markdown("---")
+        st.markdown("#### 💾 Default Baseline Manager")
+        st.caption("Save your custom guidelines and photos as the default baseline, or revert to it if you make mistakes.")
+        
+        col_set, col_rev = st.columns(2)
+        DEFAULT_JSON = "instructions_default.json"
+        
+        with col_set:
+            if st.button("💾 Set Current as Default", help="Save the current instructions and photos for this chore as the default baseline.", use_container_width=True):
+                import shutil
                 
-            # Remove old default photos for this chore
-            for file in os.listdir("assets_default"):
-                if is_chore_file(file, chore_filename):
+                # 1. Update instructions_default.json
+                default_details = {}
+                if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
                     try:
-                        os.remove(os.path.join("assets_default", file))
+                        with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
+                            default_details = json.load(f)
                     except:
                         pass
-                        
-            # Copy active photos
-            copied_count = 0
-            if os.path.exists("assets"):
-                for file in os.listdir("assets"):
-                    if is_chore_file(file, chore_filename):
-                        try:
-                            shutil.copy(os.path.join("assets", file), os.path.join("assets_default", file))
-                            copied_count += 1
-                        except:
-                            pass
-            if copied_count > 0:
-                st.session_state.save_success_msg += f" (Copied {copied_count} photos to default baseline)"
-            
-            st.rerun()
-            
-    with col_rev:
-        if st.button("⏪ Revert to Default", help="Restore the saved default instructions and photos for this chore.", use_container_width=True):
-            import shutil
-            
-            # 1. Restore instructions from instructions_default.json
-            reverted = False
-            if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
+                
+                default_details[selected_chore] = st.session_state.chore_details.get(selected_chore, {
+                    "tools": [],
+                    "steps": []
+                })
+                
                 try:
-                    with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
-                        default_details = json.load(f)
-                    if selected_chore in default_details:
-                        st.session_state.chore_details[selected_chore] = default_details[selected_chore]
-                        reverted = True
-                except:
-                    pass
-            
-            if reverted:
-                try:
-                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
-                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-                    st.session_state.save_success_msg = "✅ Reverted instructions to default baseline!"
+                    with open(DEFAULT_JSON, "w", encoding="utf-8") as f:
+                        json.dump(default_details, f, ensure_ascii=False, indent=2)
+                    st.session_state.save_success_msg = "✅ Instructions set as default baseline!"
                     st.session_state.keep_editor_open = True
                 except Exception as e:
-                    st.error(f"❌ Failed to restore instructions: {e}")
-                    reverted = False
-            else:
-                st.warning("⚠️ No saved default baseline found for this chore!")
-                
-            if reverted:
-                # 2. Restore photos from assets_default/
-                # Delete active photos
+                    st.error(f"❌ Failed to save default instructions: {e}")
+                    
+                # 2. Copy current photos to assets_default/
+                if not os.path.exists("assets_default"):
+                    os.makedirs("assets_default")
+                    
+                # Remove old default photos for this chore
+                for file in os.listdir("assets_default"):
+                    if is_chore_file(file, chore_filename):
+                        try:
+                            os.remove(os.path.join("assets_default", file))
+                        except:
+                            pass
+                            
+                # Copy active photos
+                copied_count = 0
                 if os.path.exists("assets"):
                     for file in os.listdir("assets"):
                         if is_chore_file(file, chore_filename):
                             try:
-                                os.remove(os.path.join("assets", file))
+                                shutil.copy(os.path.join("assets", file), os.path.join("assets_default", file))
+                                copied_count += 1
                             except:
                                 pass
-                                
-                # Copy back from assets_default/
-                restored_count = 0
-                if os.path.exists("assets_default"):
-                    for file in os.listdir("assets_default"):
-                        if is_chore_file(file, chore_filename):
-                            try:
-                                if not os.path.exists("assets"):
-                                    os.makedirs("assets")
-                                shutil.copy(os.path.join("assets_default", file), os.path.join("assets", file))
-                                restored_count += 1
-                            except:
-                                pass
-                if restored_count > 0:
-                    st.session_state.save_success_msg += f" (Restored {restored_count} photos from default baseline)"
+                if copied_count > 0:
+                    st.session_state.save_success_msg += f" (Copied {copied_count} photos to default baseline)"
                 
                 st.rerun()
+                
+        with col_rev:
+            if st.button("⏪ Revert to Default", help="Restore the saved default instructions and photos for this chore.", use_container_width=True):
+                import shutil
+                
+                # 1. Restore instructions from instructions_default.json
+                reverted = False
+                if os.path.exists(DEFAULT_JSON) and os.path.getsize(DEFAULT_JSON) > 0:
+                    try:
+                        with open(DEFAULT_JSON, "r", encoding="utf-8") as f:
+                            default_details = json.load(f)
+                        if selected_chore in default_details:
+                            st.session_state.chore_details[selected_chore] = default_details[selected_chore]
+                            reverted = True
+                    except:
+                        pass
+                
+                if reverted:
+                    try:
+                        with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                            json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                        st.session_state.save_success_msg = "✅ Reverted instructions to default baseline!"
+                        st.session_state.keep_editor_open = True
+                    except Exception as e:
+                        st.error(f"❌ Failed to restore instructions: {e}")
+                        reverted = False
+                else:
+                    st.warning("⚠️ No saved default baseline found for this chore!")
+                    
+                if reverted:
+                    # 2. Restore photos from assets_default/
+                    # Delete active photos
+                    if os.path.exists("assets"):
+                        for file in os.listdir("assets"):
+                            if is_chore_file(file, chore_filename):
+                                try:
+                                    os.remove(os.path.join("assets", file))
+                                except:
+                                    pass
+                                    
+                    # Copy back from assets_default/
+                    restored_count = 0
+                    if os.path.exists("assets_default"):
+                        for file in os.listdir("assets_default"):
+                            if is_chore_file(file, chore_filename):
+                                try:
+                                    if not os.path.exists("assets"):
+                                        os.makedirs("assets")
+                                    shutil.copy(os.path.join("assets_default", file), os.path.join("assets", file))
+                                    restored_count += 1
+                                except:
+                                    pass
+                    if restored_count > 0:
+                        st.session_state.save_success_msg += f" (Restored {restored_count} photos from default baseline)"
+                    
+                    st.rerun()
 
-    # 6. Inactive & Backup Guides (for renames, deletions, and combinations)
-    inactive_chores = [c for c in st.session_state.chore_details.keys() if c not in chores_list]
-    if inactive_chores:
-        st.markdown("---")
-        st.markdown("#### 📦 Inactive & Backup Guides")
-        st.caption("These guides exist in your database but their chores were deleted or renamed. You can migrate their instructions to active chores or delete them permanently.")
-        
-        for inactive in inactive_chores:
-            col_in, col_to, col_act = st.columns([2, 3, 1])
-            with col_in:
-                st.markdown(f"**{inactive}**")
-                st.caption(f"{len(st.session_state.chore_details[inactive].get('steps', []))} steps")
-            with col_to:
-                target_chore = st.selectbox(
-                    "Migrate to:", 
-                    chores_list, 
-                    key=f"migrate_to_{inactive}",
-                    index=0
-                )
-            with col_act:
-                if st.button("💾 Copy", key=f"btn_migrate_{inactive}", help=f"Copy instructions from {inactive} to {target_chore}"):
-                    # Copy details
-                    st.session_state.chore_details[target_chore] = st.session_state.chore_details[inactive].copy()
-                    
-                    # Save to database and local file
-                    if get_supabase_client() is not None:
-                        db_set("chore_details", st.session_state.chore_details)
-                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
-                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
-                        
-                    st.session_state.save_success_msg = f"✅ Successfully copied guide from '{inactive}' to '{target_chore}'!"
-                    st.session_state.keep_editor_open = True
-                    st.rerun()
+        # 6. Inactive & Backup Guides (for renames, deletions, and combinations)
+        inactive_chores = [c for c in st.session_state.chore_details.keys() if c not in chores_list]
+        if inactive_chores:
+            st.markdown("---")
+            st.markdown("#### 📦 Inactive & Backup Guides")
+            st.caption("These guides exist in your database but their chores were deleted or renamed. You can migrate their instructions to active chores or delete them permanently.")
             
-            # Allow permanent deletion
-            col_del_label, col_del_btn = st.columns([5, 1])
-            with col_del_btn:
-                if st.button("🗑️ Delete Backup", key=f"btn_del_inactive_{inactive}", help=f"Permanently delete backup guide for {inactive}"):
-                    del st.session_state.chore_details[inactive]
-                    
-                    # Save to database and local file
-                    if get_supabase_client() is not None:
-                        db_set("chore_details", st.session_state.chore_details)
-                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
-                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+            for inactive in inactive_chores:
+                col_in, col_to, col_act = st.columns([2, 3, 1])
+                with col_in:
+                    st.markdown(f"**{inactive}**")
+                    st.caption(f"{len(st.session_state.chore_details[inactive].get('steps', []))} steps")
+                with col_to:
+                    target_chore = st.selectbox(
+                        "Migrate to:", 
+                        chores_list, 
+                        key=f"migrate_to_{inactive}",
+                        index=0
+                    )
+                with col_act:
+                    if st.button("💾 Copy", key=f"btn_migrate_{inactive}", help=f"Copy instructions from {inactive} to {target_chore}"):
+                        # Copy details
+                        st.session_state.chore_details[target_chore] = st.session_state.chore_details[inactive].copy()
                         
-                    st.session_state.save_success_msg = f"🗑️ Permanently deleted backup guide for '{inactive}'!"
-                    st.session_state.keep_editor_open = True
-                    st.rerun()
+                        # Save to database and local file
+                        if get_supabase_client() is not None:
+                            db_set("chore_details", st.session_state.chore_details)
+                        with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                            json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                            
+                        st.session_state.save_success_msg = f"✅ Successfully copied guide from '{inactive}' to '{target_chore}'!"
+                        st.session_state.keep_editor_open = True
+                        st.rerun()
+                
+                # Allow permanent deletion
+                col_del_label, col_del_btn = st.columns([5, 1])
+                with col_del_btn:
+                    if st.button("🗑️ Delete Backup", key=f"btn_del_inactive_{inactive}", help=f"Permanently delete backup guide for {inactive}"):
+                        del st.session_state.chore_details[inactive]
+                        
+                        # Save to database and local file
+                        if get_supabase_client() is not None:
+                            db_set("chore_details", st.session_state.chore_details)
+                        with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                            json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                            
+                        st.session_state.save_success_msg = f"🗑️ Permanently deleted backup guide for '{inactive}'!"
+                        st.session_state.keep_editor_open = True
+                        st.rerun()
+                st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
             st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 st.markdown("---")
 # Home Reminder alert box

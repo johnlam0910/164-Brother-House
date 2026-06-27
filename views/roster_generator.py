@@ -90,131 +90,152 @@ st.markdown("---")
 
 # Expandable section for editing list of brothers and chores
 with st.expander("🛠️ Edit Names & Tasks", expanded=False):
-    st.markdown("Modify the lists below to add, remove, or change the house members and chores.")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        brothers_text = st.text_area(
-            "Brothers (one per line)", 
-            value="\n".join(st.session_state.brothers_list), 
-            height=250,
-            help="Enter the names of the brothers in the house, one name per line."
-        )
+    if not st.session_state.get("admin_authenticated", False):
+        st.warning("🔒 Editing is locked. Please enter the Admin Passcode in the sidebar to unlock.")
+    else:
+        st.markdown("Modify the lists below to add, remove, or change the house members and chores.")
         
-    with col2:
-        chores_text = st.text_area(
-            "Chores (one per line)", 
-            value="\n".join(st.session_state.chores_list), 
-            height=250,
-            help="Enter the list of chores, one chore per line."
-        )
-    
-    # Add App URL field collapsed inside Advanced Settings sub-expander
-    st.markdown("---")
-    with st.expander("⚙️ Advanced Settings (Website URL)", expanded=False):
-        st.markdown("🌐 **Website URL Configuration (for WhatsApp links)**")
-        app_url_input = st.text_input(
-            "Live Deployed Website URL", 
-            value=st.session_state.get("app_url", ""),
-            placeholder="https://164-brothers-house.streamlit.app",
-            help="Paste your live Streamlit website link here. When you copy the roster for WhatsApp, it will automatically append a direct link to the Chore Guide!"
-        )
-        # Warn if URL is localhost (won't work from other devices)
-        if app_url_input and ("localhost" in app_url_input or "127.0.0.1" in app_url_input):
-            st.warning(
-                "⚠️ **localhost links won't work on other devices!** "
-                "Please deploy your app (e.g., to Streamlit Cloud) and enter the live URL here. "
-                "For example: `https://164-brothers-house.streamlit.app`"
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            brothers_text = st.text_area(
+                "Brothers (one per line)", 
+                value="\n".join(st.session_state.brothers_list), 
+                height=250,
+                help="Enter the names of the brothers in the house, one name per line."
             )
             
-    # Save/Revert buttons in double columns
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_save, col_revert = st.columns([1, 1])
-    
-    with col_save:
-        save_btn = st.button("💾 Save Changes & Update Lists", use_container_width=True)
-    with col_revert:
-        revert_btn = st.button("⏪ Revert to Default Lists", help="Restore the default list of brothers and chores.", use_container_width=True)
+        with col2:
+            chores_text = st.text_area(
+                "Chores (one per line)", 
+                value="\n".join(st.session_state.chores_list), 
+                height=250,
+                help="Enter the list of chores, one chore per line."
+            )
         
-    if save_btn:
-        new_brothers = [line.strip() for line in brothers_text.split("\n") if line.strip()]
-        new_chores = [line.strip() for line in chores_text.split("\n") if line.strip()]
+        # Add App URL field collapsed inside Advanced Settings sub-expander
+        st.markdown("---")
+        with st.expander("⚙️ Advanced Settings (Website URL)", expanded=False):
+            st.markdown("🌐 **Website URL Configuration (for WhatsApp links)**")
+            app_url_input = st.text_input(
+                "Live Deployed Website URL", 
+                value=st.session_state.get("app_url", ""),
+                placeholder="https://164-brothers-house.streamlit.app",
+                help="Paste your live Streamlit website link here. When you copy the roster for WhatsApp, it will automatically append a direct link to the Chore Guide!"
+            )
+            # Warn if URL is localhost (won't work from other devices)
+            if app_url_input and ("localhost" in app_url_input or "127.0.0.1" in app_url_input):
+                st.warning(
+                    "⚠️ **localhost links won't work on other devices!** "
+                    "Please deploy your app (e.g., to Streamlit Cloud) and enter the live URL here. "
+                    "For example: `https://164-brothers-house.streamlit.app`"
+                )
+                
+            # One-click cloud sync button
+            if get_supabase_client() is not None:
+                st.markdown("---")
+                st.markdown("📤 **Database Sync Tools**")
+                if st.button("📤 Upload Local Files to Supabase", help="Upload current local names, chores, roster, and guides to your cloud database.", use_container_width=True):
+                    db_set("brothers_list", st.session_state.brothers_list)
+                    db_set("chores_list", st.session_state.chores_list)
+                    db_set("config", {"app_url": st.session_state.app_url})
+                    if 'roster' in st.session_state and st.session_state.roster:
+                        db_set("roster", {
+                            "roster": st.session_state.roster,
+                            "off_duty": st.session_state.off_duty
+                        })
+                    db_set("chore_details", st.session_state.chore_details)
+                    
+                    st.session_state.success_msg = "📤 Successfully uploaded and synchronized all local files to your Supabase Cloud Database!"
+                    st.rerun()
+                
+        # Save/Revert buttons in double columns
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_save, col_revert = st.columns([1, 1])
         
-        if not new_brothers:
-            st.error("Validation Error: Please enter at least one Brother name.")
-        elif not new_chores:
-            st.error("Validation Error: Please enter at least one Chore.")
-        else:
-            st.session_state.brothers_list = new_brothers
-            st.session_state.chores_list = new_chores
-            st.session_state.app_url = app_url_input.strip()
+        with col_save:
+            save_btn = st.button("💾 Save Changes & Update Lists", use_container_width=True)
+        with col_revert:
+            revert_btn = st.button("⏪ Revert to Default Lists", help="Restore the default list of brothers and chores.", use_container_width=True)
             
-            # Clean up active roster: remove deleted chores, and remove deleted brothers from assignees
-            if 'roster' in st.session_state and st.session_state.roster:
-                cleaned_roster = {}
-                for chore, assignees in st.session_state.roster.items():
-                    if chore in new_chores:
-                        cleaned_assignees = [a for a in assignees if a in new_brothers]
-                        if cleaned_assignees:
-                            cleaned_roster[chore] = cleaned_assignees
-                st.session_state.roster = cleaned_roster
+        if save_btn:
+            new_brothers = [line.strip() for line in brothers_text.split("\n") if line.strip()]
+            new_chores = [line.strip() for line in chores_text.split("\n") if line.strip()]
+            
+            if not new_brothers:
+                st.error("Validation Error: Please enter at least one Brother name.")
+            elif not new_chores:
+                st.error("Validation Error: Please enter at least one Chore.")
+            else:
+                st.session_state.brothers_list = new_brothers
+                st.session_state.chores_list = new_chores
+                st.session_state.app_url = app_url_input.strip()
                 
-                # Filter off_duty list as well
-                st.session_state.off_duty = [b for b in st.session_state.off_duty if b in new_brothers]
+                # Clean up active roster: remove deleted chores, and remove deleted brothers from assignees
+                if 'roster' in st.session_state and st.session_state.roster:
+                    cleaned_roster = {}
+                    for chore, assignees in st.session_state.roster.items():
+                        if chore in new_chores:
+                            cleaned_assignees = [a for a in assignees if a in new_brothers]
+                            if cleaned_assignees:
+                                cleaned_roster[chore] = cleaned_assignees
+                    st.session_state.roster = cleaned_roster
+                    
+                    # Filter off_duty list as well
+                    st.session_state.off_duty = [b for b in st.session_state.off_duty if b in new_brothers]
+                    
+                    # Save cleaned roster to file
+                    try:
+                        roster_data = {
+                            "roster": st.session_state.roster,
+                            "off_duty": st.session_state.off_duty
+                        }
+                        with open("roster.json", "w", encoding="utf-8") as f:
+                            json.dump(roster_data, f, ensure_ascii=False, indent=2)
+                    except:
+                        pass
                 
-                # Save cleaned roster to file
-                try:
-                    roster_data = {
-                        "roster": st.session_state.roster,
-                        "off_duty": st.session_state.off_duty
-                    }
-                    with open("roster.json", "w", encoding="utf-8") as f:
-                        json.dump(roster_data, f, ensure_ascii=False, indent=2)
-                except:
-                    pass
+                # Save to Supabase if connected
+                if get_supabase_client() is not None:
+                    db_set("brothers_list", new_brothers)
+                    db_set("chores_list", new_chores)
+                    db_set("config", {"app_url": st.session_state.app_url})
+                    if 'roster' in st.session_state and st.session_state.roster:
+                        db_set("roster", {
+                            "roster": st.session_state.roster,
+                            "off_duty": st.session_state.off_duty
+                        })
+
+                # Save to text files for persistence
+                with open("brothers.txt", "w", encoding="utf-8") as f:
+                    f.write("\n".join(new_brothers))
+                with open("chores.txt", "w", encoding="utf-8") as f:
+                    f.write("\n".join(new_chores))
+                
+                # Save config.json
+                with open("config.json", "w", encoding="utf-8") as f:
+                    json.dump({"app_url": st.session_state.app_url}, f, ensure_ascii=False, indent=2)
+                    
+                st.session_state.success_msg = "House roster lists and website config updated successfully!"
+                st.rerun()
+
+        if revert_btn:
+            st.session_state.brothers_list = DEFAULT_BROTHERS.copy()
+            st.session_state.chores_list = DEFAULT_CHORES.copy()
             
             # Save to Supabase if connected
             if get_supabase_client() is not None:
-                db_set("brothers_list", new_brothers)
-                db_set("chores_list", new_chores)
-                db_set("config", {"app_url": st.session_state.app_url})
-                if 'roster' in st.session_state and st.session_state.roster:
-                    db_set("roster", {
-                        "roster": st.session_state.roster,
-                        "off_duty": st.session_state.off_duty
-                    })
-
-            # Save to text files for persistence
-            with open("brothers.txt", "w", encoding="utf-8") as f:
-                f.write("\n".join(new_brothers))
-            with open("chores.txt", "w", encoding="utf-8") as f:
-                f.write("\n".join(new_chores))
-            
-            # Save config.json
-            with open("config.json", "w", encoding="utf-8") as f:
-                json.dump({"app_url": st.session_state.app_url}, f, ensure_ascii=False, indent=2)
+                db_set("brothers_list", DEFAULT_BROTHERS)
+                db_set("chores_list", DEFAULT_CHORES)
                 
-            st.session_state.success_msg = "House roster lists and website config updated successfully!"
+            # Save to local text files for persistence
+            with open("brothers.txt", "w", encoding="utf-8") as f:
+                f.write("\n".join(DEFAULT_BROTHERS))
+            with open("chores.txt", "w", encoding="utf-8") as f:
+                f.write("\n".join(DEFAULT_CHORES))
+                
+            st.session_state.success_msg = "⏪ Successfully reverted brothers and chores lists to defaults!"
             st.rerun()
-
-    if revert_btn:
-        st.session_state.brothers_list = DEFAULT_BROTHERS.copy()
-        st.session_state.chores_list = DEFAULT_CHORES.copy()
-        
-        # Save to Supabase if connected
-        if get_supabase_client() is not None:
-            db_set("brothers_list", DEFAULT_BROTHERS)
-            db_set("chores_list", DEFAULT_CHORES)
-            
-        # Save to local text files for persistence
-        with open("brothers.txt", "w", encoding="utf-8") as f:
-            f.write("\n".join(DEFAULT_BROTHERS))
-        with open("chores.txt", "w", encoding="utf-8") as f:
-            f.write("\n".join(DEFAULT_CHORES))
-            
-        st.session_state.success_msg = "⏪ Successfully reverted brothers and chores lists to defaults!"
-        st.rerun()
 
 
 
@@ -236,7 +257,11 @@ with gen_col1:
     st.markdown("Click the button to assign the brothers to their house duties. The roster is saved and will remain the same as you use the app.")
 
 with gen_col2:
-    generate_btn = st.button("🎲 Generate Roster", type="primary", use_container_width=True)
+    if not st.session_state.get("admin_authenticated", False):
+        st.button("🎲 Generate Roster", type="primary", use_container_width=True, disabled=True, help="Unlock in sidebar")
+        generate_btn = False
+    else:
+        generate_btn = st.button("🎲 Generate Roster", type="primary", use_container_width=True)
 
 if generate_btn:
     brothers = st.session_state.brothers_list.copy()
@@ -398,23 +423,26 @@ else:
     st.markdown("<hr>", unsafe_allow_html=True)
     c_btn1, c_btn2, c_btn3, c_btn4 = st.columns([1.2, 1.2, 1.5, 2.1])
     with c_btn1:
-        if st.button("❌ Clear Roster", use_container_width=True):
-            st.session_state.roster = {}
-            st.session_state.off_duty = []
-            
-            # Reset database roster if connected
-            if get_supabase_client() is not None:
-                db_set("roster", {"roster": {}, "off_duty": []})
+        if not st.session_state.get("admin_authenticated", False):
+            st.button("❌ Clear Roster", use_container_width=True, disabled=True, help="Unlock in sidebar")
+        else:
+            if st.button("❌ Clear Roster", use_container_width=True):
+                st.session_state.roster = {}
+                st.session_state.off_duty = []
                 
-            # Remove roster file if it exists
-            if os.path.exists("roster.json"):
-                try:
-                    os.remove("roster.json")
-                except:
-                    pass
+                # Reset database roster if connected
+                if get_supabase_client() is not None:
+                    db_set("roster", {"roster": {}, "off_duty": []})
                     
-            st.session_state.success_msg = "Roster cleared."
-            st.rerun()
+                # Remove roster file if it exists
+                if os.path.exists("roster.json"):
+                    try:
+                        os.remove("roster.json")
+                    except:
+                        pass
+                        
+                st.session_state.success_msg = "Roster cleared."
+                st.rerun()
             
     with c_btn2:
         # Convert roster to CSV for download
