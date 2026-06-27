@@ -178,8 +178,9 @@ with col_checklist:
         checkbox_key = f"step_{selected_chore}_{step_num}"
         if checkbox_key not in st.session_state:
             st.session_state[checkbox_key] = False
-        # Do not clean inline image links, display the raw step text with its OneDrive links
-        st.checkbox(f"**Step {step_num + 1}:** {step}", key=checkbox_key)
+        # Clean inline image links from step text for a clean checklist without OneDrive links
+        display_text = clean_step_text(step)
+        st.checkbox(f"**Step {step_num + 1}:** {display_text}", key=checkbox_key)
 
 with col_images:
     # Show cloud-uploaded photos (from database details)
