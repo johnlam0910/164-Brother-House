@@ -175,8 +175,8 @@ if st.session_state.get("keep_editor_open", False):
 # Reset keep_editor_open flag for next runs (so they can collapse it manually if they want)
 st.session_state.keep_editor_open = False
 
-# Edit Chore Details & Photos Expander
-with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
+# Edit Chore Details Expander
+with st.expander("✏️ Edit Chore Details", expanded=keep_open):
     st.markdown(f"### Update Guide for **{selected_chore}**")
     
     # Display save or upload results from the previous rerun
@@ -347,6 +347,57 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
                     st.session_state.save_success_msg += f" (Restored {restored_count} photos from default baseline)"
                 
                 st.rerun()
+
+    # 6. Inactive & Backup Guides (for renames, deletions, and combinations)
+    inactive_chores = [c for c in st.session_state.chore_details.keys() if c not in chores_list]
+    if inactive_chores:
+        st.markdown("---")
+        st.markdown("#### 📦 Inactive & Backup Guides")
+        st.caption("These guides exist in your database but their chores were deleted or renamed. You can migrate their instructions to active chores or delete them permanently.")
+        
+        for inactive in inactive_chores:
+            col_in, col_to, col_act = st.columns([2, 3, 1])
+            with col_in:
+                st.markdown(f"**{inactive}**")
+                st.caption(f"{len(st.session_state.chore_details[inactive].get('steps', []))} steps")
+            with col_to:
+                target_chore = st.selectbox(
+                    "Migrate to:", 
+                    chores_list, 
+                    key=f"migrate_to_{inactive}",
+                    index=0
+                )
+            with col_act:
+                if st.button("💾 Copy", key=f"btn_migrate_{inactive}", help=f"Copy instructions from {inactive} to {target_chore}"):
+                    # Copy details
+                    st.session_state.chore_details[target_chore] = st.session_state.chore_details[inactive].copy()
+                    
+                    # Save to database and local file
+                    if get_supabase_client() is not None:
+                        db_set("chore_details", st.session_state.chore_details)
+                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                        
+                    st.session_state.save_success_msg = f"✅ Successfully copied guide from '{inactive}' to '{target_chore}'!"
+                    st.session_state.keep_editor_open = True
+                    st.rerun()
+            
+            # Allow permanent deletion
+            col_del_label, col_del_btn = st.columns([5, 1])
+            with col_del_btn:
+                if st.button("🗑️ Delete Backup", key=f"btn_del_inactive_{inactive}", help=f"Permanently delete backup guide for {inactive}"):
+                    del st.session_state.chore_details[inactive]
+                    
+                    # Save to database and local file
+                    if get_supabase_client() is not None:
+                        db_set("chore_details", st.session_state.chore_details)
+                    with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(st.session_state.chore_details, f, ensure_ascii=False, indent=2)
+                        
+                    st.session_state.save_success_msg = f"🗑️ Permanently deleted backup guide for '{inactive}'!"
+                    st.session_state.keep_editor_open = True
+                    st.rerun()
+            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 st.markdown("---")
 # Home Reminder alert box
 st.markdown("""
