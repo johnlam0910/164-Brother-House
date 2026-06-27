@@ -78,6 +78,27 @@ def make_direct_image_url(url):
                 return url + "?download=1"
     return url
 
+# View passcode authentication check (Page Lock)
+if not st.session_state.get("admin_authenticated", False):
+    st.markdown("""
+    <div class="main-header">
+        <h1 class="main-title">📖 House Chore Instruction Guide</h1>
+        <p class="guide-subtitle">Clear standards make a happy home! Enter the passcode to unlock guidelines.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("---")
+    st.warning("🔒 Access Locked. The Chore Guide is private. Please enter the passcode to view the guidelines:")
+    
+    passcode_input = st.text_input("Enter Passcode:", type="password", key="view_lock_passcode")
+    correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
+    if passcode_input == correct_passcode:
+        st.session_state.admin_authenticated = True
+        st.success("🔓 Access Granted!")
+        st.rerun()
+    elif passcode_input:
+        st.error("❌ Incorrect Passcode")
+    st.stop()
+
 # Page Header
 st.markdown("""
 <div class="main-header">
