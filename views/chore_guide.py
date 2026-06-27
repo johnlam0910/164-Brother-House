@@ -50,6 +50,20 @@ def clean_step_text(step_text):
     cleaned = re.sub(r',\s*\.', '.', cleaned)      # fix ",." → "."
     return cleaned.strip()
 
+def is_chore_file(filename, chore_filename):
+    """
+    Checks if a filename corresponds exactly to the chore_filename prefix,
+    accounting for timestamps and indexes (format: chore_filename_timestamp_idx.ext).
+    """
+    name, ext = os.path.splitext(filename)
+    parts = name.split("_")
+    if len(parts) >= 3:
+        # Check if the last two parts are digits (timestamp and index)
+        if parts[-2].isdigit() and parts[-1].isdigit():
+            file_chore = "_".join(parts[:-2])
+            return file_chore == chore_filename
+    return name == chore_filename
+
 # Page Header
 st.markdown("""
 <div class="main-header">
@@ -67,6 +81,9 @@ default_index = 0
 query_chore = st.query_params.get("chore", None)
 if query_chore and query_chore in chores_list:
     default_index = chores_list.index(query_chore)
+    # Clear the query parameter so the selectbox is not locked on subsequent runs
+    if "chore" in st.query_params:
+        del st.query_params["chore"]
 elif 'selected_chore_guide' in st.session_state and st.session_state.selected_chore_guide in chores_list:
     default_index = chores_list.index(st.session_state.selected_chore_guide)
     del st.session_state.selected_chore_guide
@@ -97,7 +114,7 @@ for chore_name in st.session_state.chores_list:
     if chore_name not in st.session_state.chore_details:
         st.session_state.chore_details[chore_name] = {
             "tools": ["General cleaning supplies"],
-            "steps": ["No instructions written yet. Open and edit 'instructions.json' to write guidelines."],
+            "steps": ["No instructions written yet. Click 'Edit Chore Details & Photos' below to write guidelines."],
             "onedrive_url": ""
         }
 
@@ -135,7 +152,7 @@ found_images = []
 if os.path.exists("assets"):
     for file in os.listdir("assets"):
         name, ext = os.path.splitext(file)
-        if name.startswith(chore_filename) and ext.lower() in valid_extensions:
+        if is_chore_file(file, chore_filename) and ext.lower() in valid_extensions:
             found_images.append(os.path.join("assets", file))
 found_images.sort()
 
@@ -354,10 +371,12 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
         tools_list = [t.strip() for t in edited_tools.split(",") if t.strip()]
         steps_list = [s.strip() for s in edited_steps.split("\n") if s.strip()]
         
-        # Save instructions to JSON file
+        # Save instructions to JSON file (preserving onedrive_url if it existed)
+        old_details = st.session_state.chore_details.get(selected_chore, {})
         st.session_state.chore_details[selected_chore] = {
             "tools": tools_list,
-            "steps": steps_list
+            "steps": steps_list,
+            "onedrive_url": old_details.get("onedrive_url", "")
         }
         
         try:
@@ -460,8 +479,7 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
                 
             # Remove old default photos for this chore
             for file in os.listdir("assets_default"):
-                name, ext = os.path.splitext(file)
-                if name.startswith(chore_filename):
+                if is_chore_file(file, chore_filename):
                     try:
                         os.remove(os.path.join("assets_default", file))
                     except:
@@ -471,8 +489,7 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
             copied_count = 0
             if os.path.exists("assets"):
                 for file in os.listdir("assets"):
-                    name, ext = os.path.splitext(file)
-                    if name.startswith(chore_filename):
+                    if is_chore_file(file, chore_filename):
                         try:
                             shutil.copy(os.path.join("assets", file), os.path.join("assets_default", file))
                             copied_count += 1
@@ -516,8 +533,7 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
                 # Delete active photos
                 if os.path.exists("assets"):
                     for file in os.listdir("assets"):
-                        name, ext = os.path.splitext(file)
-                        if name.startswith(chore_filename):
+                        if is_chore_file(file, chore_filename):
                             try:
                                 os.remove(os.path.join("assets", file))
                             except:
@@ -527,8 +543,7 @@ with st.expander("✏️ Edit Chore Details & Photos", expanded=keep_open):
                 restored_count = 0
                 if os.path.exists("assets_default"):
                     for file in os.listdir("assets_default"):
-                        name, ext = os.path.splitext(file)
-                        if name.startswith(chore_filename):
+                        if is_chore_file(file, chore_filename):
                             try:
                                 if not os.path.exists("assets"):
                                     os.makedirs("assets")

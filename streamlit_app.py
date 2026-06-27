@@ -219,6 +219,15 @@ if 'chore_details' not in st.session_state:
         with open(INSTRUCTIONS_FILE, "w", encoding="utf-8") as f:
             json.dump(DEFAULT_INSTRUCTIONS, f, ensure_ascii=False, indent=2)
 
+# Ensure instructions_default.json exists
+INSTRUCTIONS_DEFAULT_FILE = "instructions_default.json"
+if not os.path.exists(INSTRUCTIONS_DEFAULT_FILE) or os.path.getsize(INSTRUCTIONS_DEFAULT_FILE) == 0:
+    try:
+        with open(INSTRUCTIONS_DEFAULT_FILE, "w", encoding="utf-8") as f:
+            json.dump(DEFAULT_INSTRUCTIONS, f, ensure_ascii=False, indent=2)
+    except:
+        pass
+
 # Load app_url configuration
 CONFIG_FILE = "config.json"
 if 'app_url' not in st.session_state:
@@ -610,6 +619,11 @@ else:
     )
 
 st.sidebar.markdown("---")
+
+# Show success toast if shared roster was loaded
+if st.session_state.get("show_shared_roster_toast"):
+    st.toast("📥 Loaded shared roster from link!", icon="✅")
+    del st.session_state.show_shared_roster_toast
 
 # 6. Run selected page routing
 pg.run()

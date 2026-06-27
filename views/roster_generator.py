@@ -34,8 +34,11 @@ BIBLE_VERSES = [
     }
 ]
 
-# Initialize verse in session state if not present
-if 'selected_verse' not in st.session_state:
+# Initialize verse in session state if not present or malformed
+if ('selected_verse' not in st.session_state 
+        or not isinstance(st.session_state.selected_verse, dict) 
+        or 'text' not in st.session_state.selected_verse 
+        or 'reference' not in st.session_state.selected_verse):
     st.session_state.selected_verse = random.choice(BIBLE_VERSES)
 
 # Page Title & Header
@@ -58,6 +61,11 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+# Render success messages across reruns
+if "success_msg" in st.session_state:
+    st.success(st.session_state.success_msg)
+    del st.session_state.success_msg
 
 # Navigation row for changing the verse manually
 vc_col1, vc_col2 = st.columns([8, 2])
@@ -121,6 +129,30 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
             st.session_state.chores_list = new_chores
             st.session_state.app_url = app_url_input.strip()
             
+            # Clean up active roster: remove deleted chores, and remove deleted brothers from assignees
+            if 'roster' in st.session_state and st.session_state.roster:
+                cleaned_roster = {}
+                for chore, assignees in st.session_state.roster.items():
+                    if chore in new_chores:
+                        cleaned_assignees = [a for a in assignees if a in new_brothers]
+                        if cleaned_assignees:
+                            cleaned_roster[chore] = cleaned_assignees
+                st.session_state.roster = cleaned_roster
+                
+                # Filter off_duty list as well
+                st.session_state.off_duty = [b for b in st.session_state.off_duty if b in new_brothers]
+                
+                # Save cleaned roster to file
+                try:
+                    roster_data = {
+                        "roster": st.session_state.roster,
+                        "off_duty": st.session_state.off_duty
+                    }
+                    with open("roster.json", "w", encoding="utf-8") as f:
+                        json.dump(roster_data, f, ensure_ascii=False, indent=2)
+                except:
+                    pass
+            
             # Save to text files for persistence
             with open("brothers.txt", "w", encoding="utf-8") as f:
                 f.write("\n".join(new_brothers))
@@ -131,7 +163,7 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
             with open("config.json", "w", encoding="utf-8") as f:
                 json.dump({"app_url": st.session_state.app_url}, f, ensure_ascii=False, indent=2)
                 
-            st.success("House roster lists and website config updated successfully!")
+            st.session_state.success_msg = "House roster lists and website config updated successfully!"
             st.rerun()
 
 
@@ -160,47 +192,50 @@ if generate_btn:
     brothers = st.session_state.brothers_list.copy()
     chores = st.session_state.chores_list.copy()
     
-    # Shuffle brothers to make the pairing random
-    random.shuffle(brothers)
-    
-    new_roster = {}
-    off_duty = []
-    
-    # Handle matching logic based on counts
-    if len(brothers) == len(chores):
-        # Perfect 1-to-1 match
-        for chore, brother in zip(chores, brothers):
-            new_roster[chore] = [brother]
-    elif len(brothers) < len(chores):
-        # Fewer brothers than chores: some brothers do multiple chores
-        for idx, chore in enumerate(chores):
-            assigned_brother = brothers[idx % len(brothers)]
-            if chore in new_roster:
-                new_roster[chore].append(assigned_brother)
-            else:
-                new_roster[chore] = [assigned_brother]
+    if not brothers or not chores:
+        st.error("Cannot generate roster: Brothers or Chores list is empty!")
     else:
-        # More brothers than chores: some brothers are off duty
-        assigned_brothers = brothers[:len(chores)]
-        off_duty = brothers[len(chores):]
-        for chore, brother in zip(chores, assigned_brothers):
-            new_roster[chore] = [brother]
-            
-    st.session_state.roster = new_roster
-    st.session_state.off_duty = off_duty
+        # Shuffle brothers to make the pairing random
+        random.shuffle(brothers)
+        
+        new_roster = {}
+        off_duty = []
+        
+        # Handle matching logic based on counts
+        if len(brothers) == len(chores):
+            # Perfect 1-to-1 match
+            for chore, brother in zip(chores, brothers):
+                new_roster[chore] = [brother]
+        elif len(brothers) < len(chores):
+            # Fewer brothers than chores: some brothers do multiple chores
+            for idx, chore in enumerate(chores):
+                assigned_brother = brothers[idx % len(brothers)]
+                if chore in new_roster:
+                    new_roster[chore].append(assigned_brother)
+                else:
+                    new_roster[chore] = [assigned_brother]
+        else:
+            # More brothers than chores: some brothers are off duty
+            assigned_brothers = brothers[:len(chores)]
+            off_duty = brothers[len(chores):]
+            for chore, brother in zip(chores, assigned_brothers):
+                new_roster[chore] = [brother]
+                
+        st.session_state.roster = new_roster
+        st.session_state.off_duty = off_duty
+        
+        # Save roster to JSON file for persistence
+        roster_data = {
+            "roster": new_roster,
+            "off_duty": off_duty
+        }
+        with open("roster.json", "w", encoding="utf-8") as f:
+            json.dump(roster_data, f, ensure_ascii=False, indent=2)
     
-    # Save roster to JSON file for persistence
-    roster_data = {
-        "roster": new_roster,
-        "off_duty": off_duty
-    }
-    with open("roster.json", "w", encoding="utf-8") as f:
-        json.dump(roster_data, f, ensure_ascii=False, indent=2)
-
-    # Automatically select a new Bible verse to go with the new roster
-    st.session_state.selected_verse = random.choice(BIBLE_VERSES)
-    st.success("✨ New chore roster generated successfully!")
-    st.rerun()
+        # Automatically select a new Bible verse to go with the new roster
+        st.session_state.selected_verse = random.choice(BIBLE_VERSES)
+        st.session_state.success_msg = "✨ New chore roster generated successfully!"
+        st.rerun()
 
 # Roster Display Section
 st.markdown("---")
@@ -216,6 +251,9 @@ else:
     grid_html = ["<div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px;'>"]
     
     for chore, assignees in roster_items:
+        # Defensive check for single-string assignees (backward compatibility)
+        if isinstance(assignees, str):
+            assignees = [assignees]
         encoded_chore = urllib.parse.quote(chore)
         grid_html.append(f"""<div class="compact-card">
 <div class="compact-card-title">{chore}</div>
@@ -311,7 +349,7 @@ else:
 
     # Print / Clear Buttons
     st.markdown("<hr>", unsafe_allow_html=True)
-    c_btn1, c_btn2, c_btn3 = st.columns([1, 1, 2])
+    c_btn1, c_btn2, c_btn3, c_btn4 = st.columns([1.2, 1.2, 1.5, 2.1])
     with c_btn1:
         if st.button("❌ Clear Roster", use_container_width=True):
             st.session_state.roster = {}
@@ -324,13 +362,15 @@ else:
                 except:
                     pass
                     
-            st.success("Roster cleared.")
+            st.session_state.success_msg = "Roster cleared."
             st.rerun()
             
     with c_btn2:
         # Convert roster to CSV for download
         df_data = []
         for chore, assignees in st.session_state.roster.items():
+            if isinstance(assignees, str):
+                assignees = [assignees]
             df_data.append({"Chore": chore, "Assigned Brothers": ", ".join(assignees)})
         
         if df_data:
@@ -345,10 +385,23 @@ else:
             )
             
     with c_btn3:
+        # Generate and copy share link
+        raw_app_url = st.session_state.get("app_url", "")
+        is_localhost = "localhost" in raw_app_url or "127.0.0.1" in raw_app_url
+        app_url_configured = bool(raw_app_url) and not is_localhost
+        if app_url_configured and st.session_state.roster:
+            from utils import encode_roster
+            encoded_val = encode_roster(
+                st.session_state.roster,
+                st.session_state.off_duty,
+                st.session_state.selected_verse
+            )
+            share_url = f"{raw_app_url.rstrip('/')}/?r={encoded_val}"
+            with st.popover("🔗 Share Link", use_container_width=True):
+                st.caption("Copy this link to share the current roster, off-duty list, and Bible verse:")
+                st.code(share_url, language="text")
+        else:
+            st.button("🔗 Share Link", disabled=True, use_container_width=True, help="Configure Website URL and generate a roster to enable sharing.")
+            
+    with c_btn4:
         st.caption("Tip: You can print this page using your browser's print shortcut (Ctrl+P or Cmd+P) to post it on the fridge!")
-
-# Show success toast if shared roster was loaded
-if st.session_state.get("show_shared_roster_toast"):
-    st.toast("📥 Loaded shared roster from link!", icon="✅")
-    # Clear the flag so it only shows once
-    del st.session_state.show_shared_roster_toast
