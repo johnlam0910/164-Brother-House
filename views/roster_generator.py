@@ -6,6 +6,17 @@ import json
 from utils import get_supabase_client, db_set
 import urllib.parse
 
+DEFAULT_BROTHERS = [
+    "John", "David", "Michael", "James", 
+    "Andrew", "Robert", "William", "Joseph", "Daniel"
+]
+
+DEFAULT_CHORES = [
+    "Staircase (Sweep Second & Third Floor)", "Back Yard", "Front Yard",
+    "Dining Table + (Mop Second & Third Floor)", "Mop Floor", "Toilet",
+    "Inside Kitchen", "Sweep Floor", "Outside Kitchen"
+]
+
 
 # Bible Verses Collection
 BIBLE_VERSES = [
@@ -99,25 +110,34 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
             help="Enter the list of chores, one chore per line."
         )
     
-    # Add App URL field
+    # Add App URL field collapsed inside Advanced Settings sub-expander
     st.markdown("---")
-    st.markdown("🌐 **Website URL Configuration (for WhatsApp links)**")
-    app_url_input = st.text_input(
-        "Live Deployed Website URL", 
-        value=st.session_state.get("app_url", ""),
-        placeholder="https://164-brothers-house.streamlit.app",
-        help="Paste your live Streamlit website link here. When you copy the roster for WhatsApp, it will automatically append a direct link to the Chore Guide!"
-    )
-    # Warn if URL is localhost (won't work from other devices)
-    if app_url_input and ("localhost" in app_url_input or "127.0.0.1" in app_url_input):
-        st.warning(
-            "⚠️ **localhost links won't work on other devices!** "
-            "Please deploy your app (e.g., to Streamlit Cloud) and enter the live URL here. "
-            "For example: `https://164-brothers-house.streamlit.app`"
+    with st.expander("⚙️ Advanced Settings (Website URL)", expanded=False):
+        st.markdown("🌐 **Website URL Configuration (for WhatsApp links)**")
+        app_url_input = st.text_input(
+            "Live Deployed Website URL", 
+            value=st.session_state.get("app_url", ""),
+            placeholder="https://164-brothers-house.streamlit.app",
+            help="Paste your live Streamlit website link here. When you copy the roster for WhatsApp, it will automatically append a direct link to the Chore Guide!"
         )
+        # Warn if URL is localhost (won't work from other devices)
+        if app_url_input and ("localhost" in app_url_input or "127.0.0.1" in app_url_input):
+            st.warning(
+                "⚠️ **localhost links won't work on other devices!** "
+                "Please deploy your app (e.g., to Streamlit Cloud) and enter the live URL here. "
+                "For example: `https://164-brothers-house.streamlit.app`"
+            )
+            
+    # Save/Revert buttons in double columns
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_save, col_revert = st.columns([1, 1])
     
-    # Save changes button
-    if st.button("💾 Save Changes & Update Lists", use_container_width=True):
+    with col_save:
+        save_btn = st.button("💾 Save Changes & Update Lists", use_container_width=True)
+    with col_revert:
+        revert_btn = st.button("⏪ Revert to Default Lists", help="Restore the default list of brothers and chores.", use_container_width=True)
+        
+    if save_btn:
         new_brothers = [line.strip() for line in brothers_text.split("\n") if line.strip()]
         new_chores = [line.strip() for line in chores_text.split("\n") if line.strip()]
         
@@ -177,6 +197,24 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
                 
             st.session_state.success_msg = "House roster lists and website config updated successfully!"
             st.rerun()
+
+    if revert_btn:
+        st.session_state.brothers_list = DEFAULT_BROTHERS.copy()
+        st.session_state.chores_list = DEFAULT_CHORES.copy()
+        
+        # Save to Supabase if connected
+        if get_supabase_client() is not None:
+            db_set("brothers_list", DEFAULT_BROTHERS)
+            db_set("chores_list", DEFAULT_CHORES)
+            
+        # Save to local text files for persistence
+        with open("brothers.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(DEFAULT_BROTHERS))
+        with open("chores.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(DEFAULT_CHORES))
+            
+        st.session_state.success_msg = "⏪ Successfully reverted brothers and chores lists to defaults!"
+        st.rerun()
 
 
 
