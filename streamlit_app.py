@@ -496,15 +496,35 @@ st.markdown("""
         
         /* Downscale header font sizes to prevent vertical overflow / multi-line wrap */
         .main-title {
-            font-size: 1.65rem !important;
+            font-size: 1.45rem !important;
         }
         .main-subtitle {
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
             margin-bottom: 10px !important;
         }
         .guide-subtitle {
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
             margin-bottom: 10px !important;
+        }
+        
+        /* Make tabs more touch-friendly on mobile */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 0 !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            padding: 12px 16px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+        }
+        .stTabs [data-baseweb="tab-panel"] {
+            padding-top: 12px !important;
+        }
+        
+        /* Ensure checkboxes have good tap target size */
+        .stCheckbox label {
+            padding: 8px 0 !important;
+            font-size: 0.95rem !important;
+            line-height: 1.4 !important;
         }
         
         /* Compress custom card paddings for better layout fit */
@@ -542,6 +562,19 @@ st.markdown("""
         }
         .compact-card-assignee {
             font-size: 1.05rem !important;
+        }
+        
+        /* Make expanders more touch-friendly */
+        .streamlit-expanderHeader {
+            font-size: 0.95rem !important;
+            padding: 10px 12px !important;
+        }
+        
+        /* Full-width columns on mobile for stacked layout */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
         }
     }
 </style>

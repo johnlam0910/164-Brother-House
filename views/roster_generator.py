@@ -99,6 +99,13 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
         placeholder="https://164-brothers-house.streamlit.app",
         help="Paste your live Streamlit website link here. When you copy the roster for WhatsApp, it will automatically append a direct link to the Chore Guide!"
     )
+    # Warn if URL is localhost (won't work from other devices)
+    if app_url_input and ("localhost" in app_url_input or "127.0.0.1" in app_url_input):
+        st.warning(
+            "⚠️ **localhost links won't work on other devices!** "
+            "Please deploy your app (e.g., to Streamlit Cloud) and enter the live URL here. "
+            "For example: `https://164-brothers-house.streamlit.app`"
+        )
     
     # Save changes button
     if st.button("💾 Save Changes & Update Lists", use_container_width=True):
@@ -243,10 +250,12 @@ else:
         verse = st.session_state.selected_verse
         
         # Determine base URL for chore guide deep links
-        app_url_configured = bool(st.session_state.get("app_url"))
+        raw_app_url = st.session_state.get("app_url", "")
+        is_localhost = "localhost" in raw_app_url or "127.0.0.1" in raw_app_url
+        app_url_configured = bool(raw_app_url) and not is_localhost
         base_url = ""
         if app_url_configured:
-            base_url = st.session_state.app_url.rstrip("/")
+            base_url = raw_app_url.rstrip("/")
             # If they entered the full subpage path, strip it out to point to the main page
             if base_url.lower().endswith("/chore_guide"):
                 base_url = base_url[:-12].rstrip("/")
@@ -283,6 +292,22 @@ else:
         
         whatsapp_text = "\n".join(whatsapp_lines)
         st.code(whatsapp_text, language="text")
+        
+        # Show a warning if URL is localhost
+        if is_localhost:
+            st.warning(
+                "⚠️ **Guide links are not included** because your Website URL is set to `localhost`. "
+                "Localhost links only work on your own computer — they won't open on anyone else's phone. "
+                "To fix this:\n"
+                "1. Deploy your app to **Streamlit Cloud** (free)\n"
+                "2. Update the **Website URL** in '🛠️ Edit Names & Tasks' above with your live URL\n"
+                "3. Re-generate the roster to get working links"
+            )
+        elif not app_url_configured:
+            st.info(
+                "💡 **Tip:** Set your deployed website URL in '🛠️ Edit Names & Tasks' above "
+                "to include clickable Guide links for each chore."
+            )
 
     # Print / Clear Buttons
     st.markdown("<hr>", unsafe_allow_html=True)
