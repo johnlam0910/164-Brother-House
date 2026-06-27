@@ -64,6 +64,19 @@ def is_chore_file(filename, chore_filename):
             return file_chore == chore_filename
     return name == chore_filename
 
+def make_direct_image_url(url):
+    """
+    Converts a SharePoint sharing link to a direct file access/download link
+    that can be embedded inside an st.image tag.
+    """
+    if "sharepoint.com" in url:
+        if "download=1" not in url:
+            if "?" in url:
+                return url + "&download=1"
+            else:
+                return url + "?download=1"
+    return url
+
 # Page Header
 st.markdown("""
 <div class="main-header">
@@ -156,13 +169,9 @@ if os.path.exists("assets"):
             found_images.append(os.path.join("assets", file))
 found_images.sort()
 
-# Count total images for the tab label
-total_image_refs = sum(len(urls) for urls in step_image_map.values()) + len(found_images)
-img_badge = f" ({total_image_refs})" if total_image_refs > 0 else ""
+col_checklist, col_images = st.columns([3, 2])
 
-tab_checklist, tab_images = st.tabs([f"📝 Cleaning Checklist", f"📷 Image Guide{img_badge}"])
-
-with tab_checklist:
+with col_checklist:
     col_title, col_btn = st.columns([3, 2])
     with col_title:
         st.caption("Cross off the tasks below as you complete them:")
@@ -172,85 +181,47 @@ with tab_checklist:
                 st.session_state[f"step_{selected_chore}_{i}"] = False
             st.rerun()
     
+    st.markdown("<br>", unsafe_allow_html=True)
     for step_num, step in enumerate(details["steps"]):
         checkbox_key = f"step_{selected_chore}_{step_num}"
         if checkbox_key not in st.session_state:
             st.session_state[checkbox_key] = False
         # Clean inline image links from step text for a cleaner checklist
         display_text = clean_step_text(step)
-        # Add a camera icon hint if this step has linked images
-        if step_num in step_image_map:
-            n_imgs = len(step_image_map[step_num])
-            img_hint = f"📷×{n_imgs}" if n_imgs > 1 else "📷"
-            display_text += f"  *({img_hint})*"
         st.checkbox(f"**Step {step_num + 1}:** {display_text}", key=checkbox_key)
 
-with tab_images:
-    # Show locally cached photos first (if any)
+with col_images:
+    has_any_images = False
+    
+    # 1. Show locally uploaded photos (if any)
     if found_images:
         st.markdown("##### 🖼️ Uploaded Photos")
-        if len(found_images) == 1:
-            st.image(found_images[0], caption=f"Visual guide for {selected_chore}", use_container_width=True)
-        else:
-            photo_tabs = st.tabs([f"Photo {i+1}" for i in range(len(found_images))])
-            for i, img_path in enumerate(photo_tabs):
-                with photo_tabs[i]:
-                    st.image(found_images[i], caption=f"Photo {i+1} of {len(found_images)}", use_container_width=True)
-        if step_image_map:
-            st.markdown("---")
-    
-    # Step-by-Step Image References
+        has_any_images = True
+        for i, img_path in enumerate(found_images):
+            st.image(img_path, caption=f"Uploaded Photo {i+1} of {len(found_images)}", use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+    # 2. Show SharePoint Step-by-Step Image Guides directly
     if step_image_map:
-        st.markdown("##### 🔗 Step-by-Step Image References")
-        st.caption("Tap any image card below to view it in full size:")
-        
+        if found_images:
+            st.markdown("---")
+        st.markdown("##### 🔗 Step-by-Step Image Guides")
+        has_any_images = True
         for step_num, urls in step_image_map.items():
             raw_step = details["steps"][step_num]
             step_label = clean_step_text(raw_step)
-            # Truncate for expander title
-            if len(step_label) > 60:
-                step_label = step_label[:57] + "..."
             
-            n_imgs = len(urls)
-            img_count = f" · {n_imgs} images" if n_imgs > 1 else ""
-            
-            with st.expander(f"📷 Step {step_num + 1}{img_count}: {step_label}", expanded=True):
-                for img_idx, url in enumerate(urls):
-                    img_label = f"Image {img_idx + 1} of {n_imgs}" if n_imgs > 1 else ""
-                    # Render a compact, tappable card for each image
-                    card_html = f"""
-                    <a href="{url}" target="_blank" style="text-decoration: none; display: block; margin-bottom: 10px;">
-                        <div style="
-                            background: linear-gradient(135deg, #f8f9fa, #e8f0fe);
-                            border: 1px solid #d0d7de;
-                            border-left: 4px solid #2e5a44;
-                            border-radius: 10px;
-                            padding: 14px 16px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            gap: 10px;
-                            min-height: 52px;
-                            -webkit-tap-highlight-color: rgba(46, 90, 68, 0.1);
-                        ">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.6rem;">📷</span>
-                                <div>
-                                    <div style="font-size: 0.8rem; font-weight: 700; color: #2e5a44; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        Step {step_num + 1} {('· ' + img_label) if img_label else ''}
-                                    </div>
-                                    <div style="font-size: 0.78rem; color: #666; margin-top: 2px;">
-                                        Tap to view image guide
-                                    </div>
-                                </div>
-                            </div>
-                            <span style="font-size: 1.2rem; color: #2e5a44;">→</span>
-                        </div>
-                    </a>
-                    """
-                    st.markdown(card_html, unsafe_allow_html=True)
-    
-    elif not found_images:
+            # Format step header nicely
+            st.markdown(f"**Step {step_num + 1}:** *{step_label}*")
+            for img_idx, url in enumerate(urls):
+                direct_url = make_direct_image_url(url)
+                img_label = f"Image {img_idx + 1}" if len(urls) > 1 else "Image Guide"
+                # Render direct image
+                st.image(direct_url, caption=f"Step {step_num + 1} — {img_label}", use_container_width=True)
+                # Render SharePoint fallback link
+                st.markdown(f"<p style='margin-top: -10px; margin-bottom: 15px;'><a href='{url}' target='_blank' style='color: #2e5a44; font-size: 0.85rem; text-decoration: none; font-weight: 600;'>🔗 Open in SharePoint</a></p>", unsafe_allow_html=True)
+                
+    if not has_any_images:
         # Fallback if no images at all
         st.markdown(f"""
         <div class="fallback-image-box">
