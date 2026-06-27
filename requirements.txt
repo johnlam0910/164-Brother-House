@@ -3,4 +3,3 @@ pandas
 openpyxl
 supabase
 postgrest
-extra-streamlit-components

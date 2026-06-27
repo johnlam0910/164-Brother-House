@@ -263,27 +263,8 @@ if 'app_url' not in st.session_state:
     else:
         st.session_state.app_url = ""
 
-# Cookie Management for Device Persistence
-import extra_streamlit_components as stx
-
-@st.cache_resource
-def get_cookie_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_cookie_manager()
-
 if 'admin_authenticated' not in st.session_state:
     st.session_state.admin_authenticated = False
-
-# Read cookie on startup to auto-login
-if not st.session_state.admin_authenticated:
-    try:
-        cookie_val = cookie_manager.get('admin_authenticated')
-        if cookie_val == 'true':
-            st.session_state.admin_authenticated = True
-            st.rerun()
-    except:
-        pass
 
 # 2. Page Navigation definitions using modern st.Page syntax
 roster_page = st.Page("views/roster_generator.py", title="Roster Generator", icon="📋", default=True)
@@ -687,10 +668,6 @@ if st.session_state.admin_authenticated:
     st.sidebar.success("🔓 Admin Mode Active")
     if st.sidebar.button("🔒 Log Out", use_container_width=True):
         st.session_state.admin_authenticated = False
-        try:
-            cookie_manager.delete('admin_authenticated', key='delete_auth_cookie_sidebar')
-        except:
-            pass
         st.rerun()
 else:
     admin_passcode_input = st.sidebar.text_input(
@@ -701,10 +678,6 @@ else:
     correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
     if admin_passcode_input == correct_passcode:
         st.session_state.admin_authenticated = True
-        try:
-            cookie_manager.set('admin_authenticated', 'true', key='set_auth_cookie_sidebar')
-        except:
-            pass
         st.sidebar.success("🔓 Access Granted!")
         st.rerun()
     elif admin_passcode_input:

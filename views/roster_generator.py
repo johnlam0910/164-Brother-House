@@ -96,11 +96,6 @@ with st.expander("🛠️ Edit Names & Tasks", expanded=False):
         correct_passcode = st.secrets.get("ADMIN_PASSCODE", "164brothers")
         if passcode_input == correct_passcode:
             st.session_state.admin_authenticated = True
-            try:
-                import extra_streamlit_components as stx
-                stx.CookieManager().set('admin_authenticated', 'true', key='set_auth_cookie_roster')
-            except:
-                pass
             st.success("🔓 Access Granted!")
             st.rerun()
         elif passcode_input:
